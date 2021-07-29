@@ -4,7 +4,8 @@
 //! [num-bigint-dig]: https://docs.rs/num-bigint-dig/0.6.1/src/num_bigint_dig/prime.rs.html#113-179
 
 #![allow(clippy::many_single_char_names)]
-
+#![no_std]
+use std::prelude::v1::*;
 use std::hash::Hash;
 
 use rand::{rngs::StdRng, Rng, SeedableRng};

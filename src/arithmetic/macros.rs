@@ -1,3 +1,5 @@
+#![no_std]
+use std::prelude::v1::*;
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __bigint_impl_from {

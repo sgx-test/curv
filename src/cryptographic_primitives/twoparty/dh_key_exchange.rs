@@ -9,7 +9,8 @@
 //! Bob chooses at random a secret "b" and sends to Alice B = bG.
 //! Both parties can compute a joint secret: C = aB = bA = abG which cannot be computed by
 //! a man in the middle attacker.
-
+#![no_std]
+use std::prelude::v1::*;
 use serde::{Deserialize, Serialize};
 
 use crate::elliptic::curves::traits::*;

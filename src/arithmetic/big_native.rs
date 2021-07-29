@@ -1,3 +1,5 @@
+#![no_std]
+use std::prelude::v1::*;
 use std::convert::{TryFrom, TryInto};
 use std::{fmt, ops};
 

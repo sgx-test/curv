@@ -13,6 +13,8 @@
 /// The variant below is to protect not only from man in the middle but also from malicious
 /// Alice or Bob that can bias the result. The details of the protocol can be found in
 /// https://eprint.iacr.org/2017/552.pdf protocol 3.1 first 3 steps.
+
+use std::prelude::v1::*;
 use std::fmt::Debug;
 
 use derivative::Derivative;

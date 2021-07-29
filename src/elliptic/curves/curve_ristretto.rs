@@ -5,7 +5,8 @@
     (https://github.com/KZen-networks/curv)
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
-
+#![no_std]
+use std::prelude::v1::*;
 use super::traits::{ECPoint, ECScalar};
 use crate::arithmetic::traits::*;
 use crate::cryptographic_primitives::hashing::hash_sha256::HSha256;

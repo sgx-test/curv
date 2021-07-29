@@ -6,7 +6,8 @@
 */
 
 // enabled via feature since it uses rust-crypto.
-
+#![no_std]
+use std::prelude::v1::*;
 use std::marker::PhantomData;
 
 use crypto::sha3::Sha3;

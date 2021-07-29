@@ -4,7 +4,8 @@
     (https://github.com/KZen-networks/curv)
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
-
+#![no_std]
+use std::prelude::v1::*;
 pub const SECRET_KEY_SIZE: usize = 32;
 pub const COMPRESSED_SIZE: usize = 96;
 

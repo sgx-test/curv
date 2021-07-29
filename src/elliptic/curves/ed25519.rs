@@ -8,6 +8,8 @@
 // paper: https://ed25519.cr.yp.to/ed25519-20110926.pdf
 // based on https://docs.rs/cryptoxide/0.1.0/cryptoxide/curve25519/index.html
 // https://cr.yp.to/ecdh/curve25519-20060209.pdf
+#![no_std]
+use std::prelude::v1::*;
 use std::fmt::Debug;
 use std::str;
 pub const TWO_TIMES_SECRET_KEY_SIZE: usize = 64;
@@ -36,12 +38,12 @@ use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Ed25519Scalar {
     purpose: &'static str,
     fe: SK,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Ed25519Point {
     purpose: &'static str,
     ge: PK,
@@ -76,7 +78,7 @@ impl ECScalar for Ed25519Scalar {
     }
 
     fn get_element(&self) -> SK {
-        self.fe
+        self.fe.clone()
     }
     fn set_element(&mut self, element: SK) {
         self.fe = element
@@ -123,7 +125,7 @@ impl ECScalar for Ed25519Scalar {
     fn add(&self, other: &SK) -> Ed25519Scalar {
         let other_point = Ed25519Scalar {
             purpose: "other add",
-            fe: *other,
+            fe: other.clone(),
         };
         let lhs_bn = self.to_big_int();
         let rhs_bn = other_point.to_big_int();
@@ -136,7 +138,7 @@ impl ECScalar for Ed25519Scalar {
     fn mul(&self, other: &SK) -> Ed25519Scalar {
         let other_point = Ed25519Scalar {
             purpose: "other mul",
-            fe: *other,
+            fe: other.clone(),
         };
         let lhs_bn = self.to_big_int();
         let rhs_bn = other_point.to_big_int();
@@ -148,7 +150,7 @@ impl ECScalar for Ed25519Scalar {
     fn sub(&self, other: &SK) -> Ed25519Scalar {
         let other_point = Ed25519Scalar {
             purpose: "other sub",
-            fe: *other,
+            fe: other.clone(),
         };
         let lhs_bn = self.to_big_int();
         let rhs_bn = other_point.to_big_int();
@@ -298,7 +300,7 @@ impl ECPoint for Ed25519Point {
     }
 
     fn get_element(&self) -> PK {
-        self.ge
+        self.ge.clone()
     }
 
     fn x_coor(&self) -> Option<BigInt> {
@@ -338,7 +340,7 @@ impl ECPoint for Ed25519Point {
                 bytes_array_32.copy_from_slice(&bytes_slice);
                 let ge_from_bytes = PK::from_bytes_negate_vartime(&bytes_array_32);
                 match ge_from_bytes {
-                    Some(_x) => {
+                    Some(ref _x) => {
                         let ge_bytes = ge_from_bytes.unwrap().to_bytes();
                         let ge_from_bytes = PK::from_bytes_negate_vartime(&ge_bytes[..]);
                         match ge_from_bytes {
@@ -361,7 +363,7 @@ impl ECPoint for Ed25519Point {
                 bytes_array_32.copy_from_slice(&bytes_slice);
                 let ge_from_bytes = PK::from_bytes_negate_vartime(bytes);
                 match ge_from_bytes {
-                    Some(_x) => {
+                    Some(ref _x) => {
                         let ge_bytes = ge_from_bytes.unwrap().to_bytes();
                         let ge_from_bytes = PK::from_bytes_negate_vartime(&ge_bytes[..]);
                         match ge_from_bytes {
@@ -408,7 +410,7 @@ impl ECPoint for Ed25519Point {
     }
 
     fn add_point(&self, other: &PK) -> Ed25519Point {
-        let pkpk = self.ge + other.to_cached();
+        let pkpk = self.ge.clone() + other.to_cached();
         let mut pk_p2_bytes = pkpk.to_p2().to_bytes();
         pk_p2_bytes[31] ^= 1 << 7;
         Ed25519Point {
@@ -418,7 +420,7 @@ impl ECPoint for Ed25519Point {
     }
 
     fn sub_point(&self, other: &PK) -> Ed25519Point {
-        let pkpk = self.ge - other.to_cached();
+        let pkpk = self.ge.clone() - other.to_cached();
         let mut pk_p2_bytes = pkpk.to_p2().to_bytes();
         pk_p2_bytes[31] ^= 1 << 7;
 

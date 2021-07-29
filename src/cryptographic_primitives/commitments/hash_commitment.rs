@@ -8,6 +8,8 @@
 //TODO: (open issue) use this struct to represent the commitment HashCommitment{comm: BigInt, r: BigInt, m: BigInt}
 /// calculate commitment c = H(m,r) using SHA3 CRHF.
 /// r is 256bit blinding factor, m is the commited value
+
+use std::prelude::v1::*;
 pub struct HashCommitment;
 
 use crate::BigInt;

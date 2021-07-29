@@ -1,3 +1,5 @@
+#![no_std]
+use std::prelude::v1::*;
 use std::{error, fmt};
 
 /// Error type returned when conversion from hex to BigInt fails.

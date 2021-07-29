@@ -1,5 +1,6 @@
 // NIST P-256 elliptic curve utility functions.
-
+#![no_std]
+use std::prelude::v1::*;
 use super::traits::{ECPoint, ECScalar};
 use crate::arithmetic::traits::*;
 use crate::BigInt;

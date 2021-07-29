@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+#![no_std]
+use std::prelude::v1::*;
 /*
     This file is part of Curv library
     Copyright 2018 by Kzen Networks

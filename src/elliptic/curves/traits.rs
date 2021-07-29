@@ -4,7 +4,8 @@
     (https://github.com/KZen-networks/curv)
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
-
+#![no_std]
+use std::prelude::v1::*;
 use std::ops::{Add, Mul};
 
 use crate::BigInt;

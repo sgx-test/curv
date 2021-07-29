@@ -13,7 +13,8 @@
 
     @license GPL-3.0+ <https://github.com/KZen-networks/cryptography-utils/blob/master/LICENSE>
 */
-
+#![no_std]
+use std::prelude::v1::*;
 use super::errors::ParseBigIntError;
 
 /// Reuse common traits from [num_integer] crate
