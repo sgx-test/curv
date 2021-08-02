@@ -12,7 +12,7 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
-use num_bigint::{BigInt, Sign, ToBigInt};
+use BigInt::{Self, Sign, ToBigInt};
 
 pub fn serialize_rand_pk_verify_pad() {
 
