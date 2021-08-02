@@ -5,14 +5,15 @@ use std::prelude::v1::*;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 
 use curv::BigInt;
-use curv::curves::secp256_k1::elliptic::Secp256k1Point;
-use curv::curves::secp256_k1::elliptic::Secp256k1Scalar;
+//use curv::curves::secp256_k1::elliptic::Secp256k1Point;
+//use curv::curves::secp256_k1::elliptic::Secp256k1Scalar;
 use curv::arithmetic::traits::*;
 use curv::cryptographic_primitives::hashing::hash_sha256::HSha256;
 use curv::cryptographic_primitives::hashing::traits::Hash;
 use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
-
+use curv::elliptic::curves::secp256_k1::Secp256k1Point;
+use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
 
 pub fn serialize_sk() {
     let scalar: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
