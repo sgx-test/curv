@@ -1,6 +1,4 @@
 use curv::*;
-use curv::ErrorKey;
-
 use std::prelude::v1::*;
 use std::panic::{catch_unwind, resume_unwind, AssertUnwindSafe};
 
@@ -14,6 +12,10 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
+use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
+use serde::ser::SerializeStruct;
+use serde::ser::{Serialize, Serializer};
+use serde::{Deserialize, Deserializer};
 
 pub fn serialize_sk() {
     let scalar: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
