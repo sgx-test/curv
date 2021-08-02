@@ -14,14 +14,14 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 
 
-fn serialize_sk() {
+pub fn serialize_sk() {
     let scalar: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
     let s = serde_json::to_string(&scalar).expect("Failed in serialization");
     assert_eq!(s, "\"1e240\"");
 }
 
 
-fn serialize_rand_pk_verify_pad() {
+pub fn serialize_rand_pk_verify_pad() {
     let vx = BigInt::from_hex(
         &"ccaf75ab7960a01eb421c0e2705f6e84585bd0a094eb6af928c892a4a2912508".to_string(),
     )
@@ -54,7 +54,7 @@ fn serialize_rand_pk_verify_pad() {
 }
 
 
-fn deserialize_sk() {
+pub fn deserialize_sk() {
     let s = "\"1e240\"";
     let dummy: Secp256k1Scalar = serde_json::from_str(s).expect("Failed in serialization");
 
@@ -64,7 +64,7 @@ fn deserialize_sk() {
 }
 
 
-fn serialize_pk() {
+pub fn serialize_pk() {
     let pk = Secp256k1Point::generator();
     let x = pk.x_coor().unwrap();
     let y = pk.y_coor().unwrap();
@@ -78,7 +78,7 @@ fn serialize_pk() {
 }
 
 
-fn bincode_pk() {
+pub fn bincode_pk() {
     let pk = Secp256k1Point::generator();
     let bin = bincode::serialize(&pk).unwrap();
     let decoded: Secp256k1Point = bincode::deserialize(bin.as_slice()).unwrap();
@@ -89,7 +89,7 @@ use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::ErrorKey;
 
 
-fn test_serdes_pk() {
+pub fn test_serdes_pk() {
     let pk = GE::generator();
     let s = serde_json::to_string(&pk).expect("Failed in serialization");
     let des_pk: GE = serde_json::from_str(&s).expect("Failed in deserialization");
@@ -112,7 +112,7 @@ fn test_serdes_bad_pk() {
 }
 
 
-fn test_from_bytes() {
+pub fn test_from_bytes() {
     let g = Secp256k1Point::generator();
     let hash = HSha256::create_hash(&[&g.bytes_compressed_to_big_int()]);
     let hash_vec = BigInt::to_bytes(&hash);
@@ -121,7 +121,7 @@ fn test_from_bytes() {
 }
 
 
-fn test_from_bytes_3() {
+pub fn test_from_bytes_3() {
     let test_vec = [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 1, 2, 3, 4, 5, 6,
@@ -131,7 +131,7 @@ fn test_from_bytes_3() {
 }
 
 
-fn test_from_bytes_4() {
+pub fn test_from_bytes_4() {
     let test_vec = [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6,
     ];
@@ -140,7 +140,7 @@ fn test_from_bytes_4() {
 }
 
 
-fn test_from_bytes_5() {
+pub fn test_from_bytes_5() {
     let test_vec = [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5,
         6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4,
@@ -152,7 +152,7 @@ fn test_from_bytes_5() {
 }
 
 
-fn test_minus_point() {
+pub fn test_minus_point() {
     let a: FE = ECScalar::new_random();
     let b: FE = ECScalar::new_random();
     let b_bn = b.to_big_int();
@@ -170,7 +170,7 @@ fn test_minus_point() {
 }
 
 
-fn test_invert() {
+pub fn test_invert() {
     let a: FE = ECScalar::new_random();
     let a_bn = a.to_big_int();
     let a_inv = a.invert();
@@ -180,7 +180,7 @@ fn test_invert() {
 }
 
 
-fn test_scalar_mul_scalar() {
+pub fn test_scalar_mul_scalar() {
     let a: FE = ECScalar::new_random();
     let b: FE = ECScalar::new_random();
     let c1 = a.mul(&b.get_element());
@@ -189,7 +189,7 @@ fn test_scalar_mul_scalar() {
 }
 
 
-fn test_pk_to_key_slice() {
+pub fn test_pk_to_key_slice() {
     for _ in 1..200 {
         let r = FE::new_random();
         let rg = GE::generator() * r;
@@ -204,7 +204,7 @@ fn test_pk_to_key_slice() {
 }
 
 
-fn test_base_point2() {
+pub fn test_base_point2() {
     /* Show that base_point2() is returning a point of unknown discrete logarithm.
     It is done by using SHA256 repeatedly as a pseudo-random function, with the generator
     as the initial input, until receiving a valid Secp256k1 point. */
