@@ -12,17 +12,6 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
-use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
-use serde::ser::SerializeStruct;
-use serde::ser::{Serialize, Serializer};
-use serde::{Deserialize, Deserializer};
-
-pub fn serialize_sk() {
-    let scalar: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
-    let s = serde_json::to_string(&scalar).expect("Failed in serialization");
-    assert_eq!(s, "\"1e240\"");
-}
-
 
 pub fn serialize_rand_pk_verify_pad() {
     let vx = BigInt::from_hex(
@@ -57,30 +46,6 @@ pub fn serialize_rand_pk_verify_pad() {
 }
 
 
-pub fn deserialize_sk() {
-    let s = "\"1e240\"";
-    let dummy: Secp256k1Scalar = serde_json::from_str(s).expect("Failed in serialization");
-
-    let sk: Secp256k1Scalar = ECScalar::from(&BigInt::from(123456));
-
-    assert_eq!(dummy, sk);
-}
-
-
-pub fn serialize_pk() {
-    let pk = Secp256k1Point::generator();
-    let x = pk.x_coor().unwrap();
-    let y = pk.y_coor().unwrap();
-    let s = serde_json::to_string(&pk).expect("Failed in serialization");
-
-    let expected = format!("{{\"x\":\"{}\",\"y\":\"{}\"}}", x.to_hex(), y.to_hex());
-    assert_eq!(s, expected);
-
-    let des_pk: Secp256k1Point = serde_json::from_str(&s).expect("Failed in serialization");
-    assert_eq!(des_pk.ge, pk.ge);
-}
-
-
 pub fn bincode_pk() {
     let pk = Secp256k1Point::generator();
     let bin = bincode::serialize(&pk).unwrap();
@@ -91,18 +56,6 @@ pub fn bincode_pk() {
 use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::ErrorKey;
 
-
-pub fn test_serdes_pk() {
-    let pk = GE::generator();
-    let s = serde_json::to_string(&pk).expect("Failed in serialization");
-    let des_pk: GE = serde_json::from_str(&s).expect("Failed in deserialization");
-    assert_eq!(des_pk, pk);
-
-    let pk = GE::base_point2();
-    let s = serde_json::to_string(&pk).expect("Failed in serialization");
-    let des_pk: GE = serde_json::from_str(&s).expect("Failed in deserialization");
-    assert_eq!(des_pk, pk);
-}
 
 #[should_panic]
 fn test_serdes_bad_pk() {

@@ -79,12 +79,8 @@ pub extern "C" fn say_something(some_string: *const u8, some_len: usize) -> sgx_
     println!("{}", &hello_string);
 
     rsgx_unit_tests!(
-        tests::serialize_sk,
         tests::serialize_rand_pk_verify_pad,
-        tests::deserialize_sk,
-        tests::serialize_pk,
         tests::bincode_pk,
-        tests::test_serdes_pk,
         tests::test_from_bytes,
         tests::test_from_bytes_3,
         tests::test_from_bytes_4,
