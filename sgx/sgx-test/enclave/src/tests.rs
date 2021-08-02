@@ -42,9 +42,10 @@ pub fn serialize_rand_pk_verify_pad() {
 
     println!("3");
     let r = Secp256k1Point::random_point();
+    println!("4");
     let r_expected = Secp256k1Point::from_coor(&r.x_coor().unwrap(), &r.y_coor().unwrap());
 
-    println!("4");
+    println!("5");
     assert_eq!(r.x_coor().unwrap(), r_expected.x_coor().unwrap());
     assert_eq!(r.y_coor().unwrap(), r_expected.y_coor().unwrap());
 }
