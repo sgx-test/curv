@@ -45,14 +45,6 @@ pub fn serialize_rand_pk_verify_pad() {
     assert_eq!(r.y_coor().unwrap(), r_expected.y_coor().unwrap());
 }
 
-
-pub fn bincode_pk() {
-    let pk = Secp256k1Point::generator();
-    let bin = bincode::serialize(&pk).unwrap();
-    let decoded: Secp256k1Point = bincode::deserialize(bin.as_slice()).unwrap();
-    assert_eq!(decoded, pk);
-}
-
 use curv::elliptic::curves::secp256_k1::{FE, GE};
 use curv::ErrorKey;
 

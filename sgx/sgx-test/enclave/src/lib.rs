@@ -80,7 +80,6 @@ pub extern "C" fn say_something(some_string: *const u8, some_len: usize) -> sgx_
 
     rsgx_unit_tests!(
         tests::serialize_rand_pk_verify_pad,
-        tests::bincode_pk,
         tests::test_from_bytes,
         tests::test_from_bytes_3,
         tests::test_from_bytes_4,
