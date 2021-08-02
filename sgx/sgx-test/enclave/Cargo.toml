@@ -11,7 +11,7 @@ crate-type = ["staticlib"]
 default = []
 
 [dependencies]
-curv = { path = "../../.." }
+curv = { path = "../../..", features = ["bigint","mesalock_sgx"] }
 
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
 sgx_types = { rev = "v1.1.3", git = "https://github.com/apache/teaclave-sgx-sdk.git" }
