@@ -12,8 +12,23 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
+use num_bigint::{BigInt, Sign, ToBigInt};
 
 pub fn serialize_rand_pk_verify_pad() {
+
+
+    println!("1");
+
+    let a = BigInt::from_bytes_be(Sign::Plus, b"Hello world!AAAAAA");
+
+    println!("2");
+    let b = BigInt::from_bytes_be(Sign::Plus, b"Hello world!BBBBBB");
+
+    println!("{}", a * b);
+
+
+
+
     println!("1");
     let vx = BigInt::from_hex(
         &"ccaf75ab7960a01eb421c0e2705f6e84585bd0a094eb6af928c892a4a2912508".to_string(),
