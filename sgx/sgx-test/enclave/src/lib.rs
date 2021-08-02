@@ -77,6 +77,24 @@ pub extern "C" fn say_something(some_string: *const u8, some_len: usize) -> sgx_
 
     // Ocall to normal world for output
     println!("{}", &hello_string);
-    
+
+    rsgx_unit_tests!(
+        tests::serialize_sk,
+        tests::serialize_rand_pk_verify_pad,
+        tests::deserialize_sk,
+        tests::serialize_pk,
+        tests::bincode_pk,
+        tests::test_serdes_pk,
+        tests::test_from_bytes,
+        tests::test_from_bytes_3,
+        tests::test_from_bytes_4,
+        tests::test_from_bytes_5,
+        tests::test_minus_point,
+        tests::test_invert,
+        tests::test_scalar_mul_scalar,
+        tests::test_pk_to_key_slice,
+        tests::test_base_point2,
+    );
+
     sgx_status_t::SGX_SUCCESS
 }
