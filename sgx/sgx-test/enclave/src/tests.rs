@@ -14,6 +14,7 @@ use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
 
 pub fn serialize_rand_pk_verify_pad() {
+    println!("1");
     let vx = BigInt::from_hex(
         &"ccaf75ab7960a01eb421c0e2705f6e84585bd0a094eb6af928c892a4a2912508".to_string(),
     )
@@ -24,6 +25,7 @@ pub fn serialize_rand_pk_verify_pad() {
     )
         .unwrap();
 
+    println!("2");
     Secp256k1Point::from_coor(&vx, &vy); // x and y of size 32
 
     let x = BigInt::from_hex(
@@ -38,9 +40,11 @@ pub fn serialize_rand_pk_verify_pad() {
 
     Secp256k1Point::from_coor(&x, &y); // x and y not of size 32 each
 
+    println!("3");
     let r = Secp256k1Point::random_point();
     let r_expected = Secp256k1Point::from_coor(&r.x_coor().unwrap(), &r.y_coor().unwrap());
 
+    println!("4");
     assert_eq!(r.x_coor().unwrap(), r_expected.x_coor().unwrap());
     assert_eq!(r.y_coor().unwrap(), r_expected.y_coor().unwrap());
 }
