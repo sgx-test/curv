@@ -12,23 +12,8 @@ use curv::elliptic::curves::traits::ECPoint;
 use curv::elliptic::curves::traits::ECScalar;
 use curv::elliptic::curves::secp256_k1::Secp256k1Point;
 use curv::elliptic::curves::secp256_k1::Secp256k1Scalar;
-use curv::BigInt::{Self, Sign, ToBigInt};
 
 pub fn serialize_rand_pk_verify_pad() {
-
-
-    println!("1");
-
-    let a = BigInt::from_bytes_be(Sign::Plus, b"Hello world!AAAAAA");
-
-    println!("2");
-    let b = BigInt::from_bytes_be(Sign::Plus, b"Hello world!BBBBBB");
-
-    println!("{}", a * b);
-
-
-
-
     println!("1");
     let vx = BigInt::from_hex(
         &"ccaf75ab7960a01eb421c0e2705f6e84585bd0a094eb6af928c892a4a2912508".to_string(),
@@ -129,10 +114,10 @@ pub fn test_minus_point() {
     let a_minus_b = BigInt::mod_add(&a.to_big_int(), &minus_b, &order);
     let a_minus_b_fe: FE = ECScalar::from(&a_minus_b);
     let base: GE = ECPoint::generator();
-    let point_ab1 = base * a_minus_b_fe;
+    let point_ab1 = base.clone() * a_minus_b_fe;
 
-    let point_a = base * a;
-    let point_b = base * b;
+    let point_a = base.clone() * a;
+    let point_b = base.clone() * b;
     let point_ab2 = point_a.sub_point(&point_b.get_element());
     assert_eq!(point_ab1.get_element(), point_ab2.get_element());
 }
