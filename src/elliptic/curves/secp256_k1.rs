@@ -96,7 +96,7 @@ impl Zeroize for Secp256k1Scalar {
 }
 
 use rand::Rng;
-use num_bigint::BigInt;
+//use num_bigint::BigInt;
 
 fn random_32_bytes<R: Rng + ?Sized>(rng: &mut R) -> [u32; 8] {
     let mut ret = [0u32; 8];
