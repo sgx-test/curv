@@ -19,6 +19,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "base64"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
+
+[[package]]
 name = "bitvec"
 version = "0.18.0"
 source = "git+https://github.com/sgx-test/bitvec-sgx?branch=0.18.0_sgx1.1.3#a6d3480f2ae65540a9e23b8593f3067ee5241615"
@@ -141,6 +147,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "crunchy"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
+
+[[package]]
 name = "crypto-mac"
 version = "0.7.0"
 source = "git+https://github.com/sgx-test/hmac-sgx#7a98bc719b64e86e5805d685132d8b2373af05b8"
@@ -181,6 +193,7 @@ dependencies = [
  "hex",
  "hmac 0.7.1",
  "lazy_static",
+ "libsecp256k1",
  "merkle-sha3",
  "num-bigint 0.4.0 (git+https://github.com/sgx-test/num-bigint-sgx)",
  "num-integer",
@@ -191,7 +204,6 @@ dependencies = [
  "ring-algorithm",
  "rust-crypto",
  "rust-gmp-kzen",
- "secp256k1",
  "serde 1.0.118",
  "serde_derive 1.0.118",
  "sgx_tstd",
@@ -390,6 +402,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "hmac-drbg"
+version = "0.2.0"
+source = "git+https://github.com/sgx-test/hmac-drbg-sgx#7fc22dda22d3afc2a837deca618fbcd0a3e656c3"
+dependencies = [
+ "digest 0.8.1",
+ "generic-array 0.12.4",
+ "hmac 0.7.1",
+ "sgx_tstd",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -408,6 +431,24 @@ name = "libc"
 version = "0.2.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "320cfe77175da3a483efed4bc0adc1968ca050b098ce4f2f1c13a56626128790"
+
+[[package]]
+name = "libsecp256k1"
+version = "0.3.5"
+source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx#0dfcc509718675efcc1998288e9d154e439d0ad4"
+dependencies = [
+ "arrayref",
+ "base64",
+ "crunchy",
+ "digest 0.8.1",
+ "hmac-drbg",
+ "rand",
+ "serde 1.0.118",
+ "sgx_tstd",
+ "sha2 0.8.0",
+ "subtle 2.2.2",
+ "typenum",
+]
 
 [[package]]
 name = "merkle-sha3"
@@ -601,25 +642,6 @@ version = "0.3.24"
 source = "git+https://github.com/mesalock-linux/rustc-serialize-sgx#674da51fd201667546d2b88c7c166fc99fe23374"
 dependencies = [
  "sgx_tstd",
-]
-
-[[package]]
-name = "secp256k1"
-version = "0.20.3"
-source = "git+https://github.com/sgx-test/secp256k1-sgx?branch=20.3-sgx#79b41b536a6ea04d542d6aae1a4cc02b03efa0ce"
-dependencies = [
- "rand",
- "secp256k1-sys",
- "serde 1.0.118",
- "sgx_tstd",
-]
-
-[[package]]
-name = "secp256k1-sys"
-version = "0.4.0"
-source = "git+https://github.com/sgx-test/secp256k1-sgx?branch=20.3-sgx#79b41b536a6ea04d542d6aae1a4cc02b03efa0ce"
-dependencies = [
- "cc",
 ]
 
 [[package]]
