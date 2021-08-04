@@ -63,12 +63,12 @@ const BASE_POINT2_Y: [u8; 32] = [
 pub type SK = SecretKey;
 pub type PK = PublicKey;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Secp256k1Scalar {
     purpose: &'static str,
     fe: SK,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Secp256k1Point {
     purpose: &'static str,
     ge: PK,
