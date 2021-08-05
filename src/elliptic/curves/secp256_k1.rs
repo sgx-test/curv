@@ -35,8 +35,8 @@ use rand::thread_rng;
 //};
 //use secp256k1::{PublicKey, Secp256k1, SecretKey, VerifyOnly};
 
-use libsecp256k1::{PublicKey, SecretKey};
-use libsecp256k1::curve::Scalar;
+use secp256k1::{PublicKey, SecretKey};
+use secp256k1::curve::Scalar;
 
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
