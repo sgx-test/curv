@@ -39,7 +39,9 @@ rust-gmp-kzen = { version = "0.5", features = ["serde_support"], optional = true
 num-bigint = { version = "0.4", features = ["serde"], optional = true }
 
 [dependencies.secp256k1]
-version = "0.20"
+git  = "https://github.com/sgx-test/libsecp256k1-sgx"
+branch = "0.3.5-sgx-struct"
+#version = "0.20"
 features = ["serde", "rand-std"]
 
 [dependencies.p256]
@@ -54,4 +56,4 @@ proptest = "0.10"
 proptest-derive = "0.2"
 
 [features]
-default = ["rust-gmp-kzen"]
+default = ["num-bigint"]
