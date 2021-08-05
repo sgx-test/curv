@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+#![no_std]
+use std::prelude::v1::*;
 /*
     This file is part of Curv library
     Copyright 2018 by Kzen Networks
@@ -28,10 +30,14 @@ use crypto::sha3::Sha3;
 #[cfg(feature = "merkle")]
 use merkle::Hashable;
 use rand::thread_rng;
-use secp256k1::constants::{
-    CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
-};
-use secp256k1::{PublicKey, Secp256k1, SecretKey, VerifyOnly};
+//use secp256k1::constants::{
+//    CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
+//};
+//use secp256k1::{PublicKey, Secp256k1, SecretKey, VerifyOnly};
+
+use libsecp256k1::{PublicKey, SecretKey};
+use libsecp256k1::curve::Scalar;
+
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
 use serde::ser::{Serialize, Serializer};
@@ -90,27 +96,36 @@ impl Zeroize for Secp256k1Scalar {
     }
 }
 
+use rand::Rng;
+//use num_bigint::BigInt;
+
+fn random_32_bytes<R: Rng + ?Sized>(rng: &mut R) -> [u32; 8] {
+    let mut ret = [0u32; 8];
+    rng.fill(&mut ret);
+    ret
+}
+
 impl ECScalar for Secp256k1Scalar {
     type SecretKey = SK;
 
     fn new_random() -> Secp256k1Scalar {
         Secp256k1Scalar {
             purpose: "random",
-            fe: SecretKey::new(&mut thread_rng()),
+            fe: SecretKey::random(&mut thread_rng()),
         }
     }
 
     fn zero() -> Secp256k1Scalar {
-        let zero_arr = [0u8; 32];
-        let zero = unsafe { std::mem::transmute::<[u8; 32], SecretKey>(zero_arr) };
+        //let zero_arr = [0u8; 32];
+        //let zero = unsafe { std::mem::transmute::<[u8; 32], SecretKey>(zero_arr) };
         Secp256k1Scalar {
             purpose: "zero",
-            fe: zero,
+            fe: SecretKey::default(),
         }
     }
 
     fn get_element(&self) -> SK {
-        self.fe
+        self.fe.clone()
     }
 
     fn set_element(&mut self, element: SK) {
@@ -130,12 +145,14 @@ impl ECScalar for Secp256k1Scalar {
 
         Secp256k1Scalar {
             purpose: "from_big_int",
-            fe: SK::from_slice(&v).unwrap(),
+            fe: SK::parse_slice(&v).unwrap(),
         }
     }
 
     fn to_big_int(&self) -> BigInt {
-        BigInt::from_bytes(&(self.fe[0..self.fe.len()]))
+        //BigInt::from_bytes(&(self.fe[0..self.fe.len()]))
+        let scalar: Scalar = self.fe.clone().into();
+        BigInt::from_bytes(&scalar.b32())
     }
 
     fn q() -> BigInt {
@@ -144,7 +161,7 @@ impl ECScalar for Secp256k1Scalar {
 
     fn add(&self, other: &SK) -> Secp256k1Scalar {
         let mut other_scalar: FE = ECScalar::new_random();
-        other_scalar.set_element(*other);
+        other_scalar.set_element(other.clone());
         let res: FE = ECScalar::from(&BigInt::mod_add(
             &self.to_big_int(),
             &other_scalar.to_big_int(),
@@ -158,7 +175,7 @@ impl ECScalar for Secp256k1Scalar {
 
     fn mul(&self, other: &SK) -> Secp256k1Scalar {
         let mut other_scalar: FE = ECScalar::new_random();
-        other_scalar.set_element(*other);
+        other_scalar.set_element(other.clone());
         let res: FE = ECScalar::from(&BigInt::mod_mul(
             &self.to_big_int(),
             &other_scalar.to_big_int(),
@@ -172,7 +189,7 @@ impl ECScalar for Secp256k1Scalar {
 
     fn sub(&self, other: &SK) -> Secp256k1Scalar {
         let mut other_scalar: FE = ECScalar::new_random();
-        other_scalar.set_element(*other);
+        other_scalar.set_element(other.clone());
         let res: FE = ECScalar::from(&BigInt::mod_sub(
             &self.to_big_int(),
             &other_scalar.to_big_int(),
@@ -282,7 +299,7 @@ impl ECPoint for Secp256k1Point {
         v.extend(BASE_POINT2_Y.as_ref());
         Secp256k1Point {
             purpose: "random",
-            ge: PK::from_slice(&v).unwrap(),
+            ge: PK::parse_slice(&v,None).unwrap(),
         }
     }
 
@@ -292,12 +309,12 @@ impl ECPoint for Secp256k1Point {
         v.extend(GENERATOR_Y.as_ref());
         Secp256k1Point {
             purpose: "base_fe",
-            ge: PK::from_slice(&v).unwrap(),
+            ge: PK::parse_slice(&v,None).unwrap(),
         }
     }
 
     fn get_element(&self) -> PK {
-        self.ge
+        self.ge.clone()
     }
 
     /// to return from BigInt to PK use from_bytes:
@@ -305,19 +322,19 @@ impl ECPoint for Secp256k1Point {
     /// 2) remove first byte [1..33]
     /// 3) call from_bytes
     fn bytes_compressed_to_big_int(&self) -> BigInt {
-        let serial = self.ge.serialize();
+        let serial = self.ge.serialize_compressed();
         BigInt::from_bytes(&serial[0..33])
     }
 
     fn x_coor(&self) -> Option<BigInt> {
-        let serialized_pk = PK::serialize_uncompressed(&self.ge);
+        let serialized_pk = PK::serialize(&self.ge);
         let x = &serialized_pk[1..serialized_pk.len() / 2 + 1];
         let x_vec = x.to_vec();
         Some(BigInt::from_bytes(&x_vec[..]))
     }
 
     fn y_coor(&self) -> Option<BigInt> {
-        let serialized_pk = PK::serialize_uncompressed(&self.ge);
+        let serialized_pk = PK::serialize(&self.ge);
         let y = &serialized_pk[(serialized_pk.len() - 1) / 2 + 1..serialized_pk.len()];
         let y_vec = y.to_vec();
         Some(BigInt::from_bytes(&y_vec[..]))
@@ -339,12 +356,14 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_65.copy_from_slice(&bytes_slice[0..65]);
-                let result = PK::from_slice(&bytes_array_65);
-                let test = result.map(|pk| Secp256k1Point {
+                let result = PK::parse_slice(&bytes_array_65,None);
+
+                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                let test = Secp256k1Point {
                     purpose: "random",
-                    ge: pk,
-                });
-                test.map_err(|_err| ErrorKey::InvalidPublicKey)
+                    ge: result.unwrap(),
+                };
+                Ok(test)
             }
 
             0..=32 => {
@@ -356,12 +375,14 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_33.copy_from_slice(&bytes_slice[0..33]);
-                let result = PK::from_slice(&bytes_array_33);
-                let test = result.map(|pk| Secp256k1Point {
+                let result = PK::parse_slice(&bytes_array_33,None);
+
+                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                let test = Secp256k1Point {
                     purpose: "random",
-                    ge: pk,
-                });
-                test.map_err(|_err| ErrorKey::InvalidPublicKey)
+                    ge: result.unwrap(),
+                };
+                Ok(test)
             }
             _ => {
                 let bytes_slice = &bytes_vec[0..64];
@@ -371,12 +392,14 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_65.copy_from_slice(&bytes_slice[0..65]);
-                let result = PK::from_slice(&bytes_array_65);
-                let test = result.map(|pk| Secp256k1Point {
+                let result = PK::parse_slice(&bytes_array_65,None);
+
+                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                let test = Secp256k1Point {
                     purpose: "random",
-                    ge: pk,
-                });
-                test.map_err(|_err| ErrorKey::InvalidPublicKey)
+                    ge: result.unwrap(),
+                };
+                Ok(test)
             }
         }
     }
@@ -399,25 +422,28 @@ impl ECPoint for Secp256k1Point {
     }
 
     fn scalar_mul(&self, fe: &SK) -> Secp256k1Point {
-        let mut new_point = *self;
-        new_point
-            .ge
-            .mul_assign(get_context(), &fe[..])
-            .expect("Assignment expected");
+        let mut new_point = self.clone();
+//        new_point
+//            .ge
+//            .mul_assign(get_context(), &fe[..])
+//            .expect("Assignment expected");
+        new_point.ge.tweak_mul_assign(fe);
         new_point
     }
 
     fn add_point(&self, other: &PK) -> Secp256k1Point {
+
+        let res = PK::combine(&[self.ge.clone(),other.clone()]).unwrap();
         Secp256k1Point {
             purpose: "combine",
-            ge: self.ge.combine(other).unwrap(),
+            ge: res,
         }
     }
 
     fn sub_point(&self, other: &PK) -> Secp256k1Point {
         let point = Secp256k1Point {
             purpose: "sub_point",
-            ge: *other,
+            ge: other.clone(),
         };
         let p: Vec<u8> = vec![
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -474,19 +500,19 @@ impl ECPoint for Secp256k1Point {
 
         Secp256k1Point {
             purpose: "base_fe",
-            ge: PK::from_slice(&v).unwrap(),
+            ge: PK::parse_slice(&v,None).unwrap(),
         }
     }
 }
 
-static mut CONTEXT: Option<Secp256k1<VerifyOnly>> = None;
-pub fn get_context() -> &'static Secp256k1<VerifyOnly> {
-    static INIT_CONTEXT: Once = Once::new();
-    INIT_CONTEXT.call_once(|| unsafe {
-        CONTEXT = Some(Secp256k1::verification_only());
-    });
-    unsafe { CONTEXT.as_ref().unwrap() }
-}
+//static mut CONTEXT: Option<Secp256k1<VerifyOnly>> = None;
+//pub fn get_context() -> &'static Secp256k1<VerifyOnly> {
+//    static INIT_CONTEXT: Once = Once::new();
+//    INIT_CONTEXT.call_once(|| unsafe {
+//        CONTEXT = Some(Secp256k1::verification_only());
+//    });
+//    unsafe { CONTEXT.as_ref().unwrap() }
+//}
 
 #[cfg(feature = "merkle")]
 impl Hashable for Secp256k1Point {
@@ -607,6 +633,37 @@ impl<'de> Visitor<'de> for Secp256k1PointVisitor {
         Ok(Secp256k1Point::from_coor(&bx, &by))
     }
 }
+
+/// The order of the secp256k1 curve
+pub const CURVE_ORDER: [u8; 32] = [
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+    0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b,
+    0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41
+];
+/// The X coordinate of the generator
+pub const GENERATOR_X: [u8; 32] = [
+    0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac,
+    0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b, 0x07,
+    0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9,
+    0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98
+];
+
+/// The Y coordinate of the generator
+pub const GENERATOR_Y: [u8; 32] = [
+    0x48, 0x3a, 0xda, 0x77, 0x26, 0xa3, 0xc4, 0x65,
+    0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08, 0xa8,
+    0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19,
+    0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8
+];
+/// The size (in bytes) of a secret key
+pub const SECRET_KEY_SIZE: usize = 32;
+
+/// The size (in bytes) of a serialized public key.
+pub const PUBLIC_KEY_SIZE: usize = 33;
+
+/// The size (in bytes) of an serialized uncompressed public key
+pub const UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = 65;
 
 #[cfg(test)]
 mod tests {
