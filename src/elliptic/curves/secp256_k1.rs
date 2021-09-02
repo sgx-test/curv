@@ -116,11 +116,11 @@ impl ECScalar for Secp256k1Scalar {
     }
 
     fn zero() -> Secp256k1Scalar {
-        //let zero_arr = [0u8; 32];
-        //let zero = unsafe { std::mem::transmute::<[u8; 32], SecretKey>(zero_arr) };
+        let zero_arr = [0u8; 32];
+        let zero = unsafe { std::mem::transmute::<[u8; 32], SecretKey>(zero_arr) };
         Secp256k1Scalar {
             purpose: "zero",
-            fe: SecretKey::default(),
+            fe: zero,
         }
     }
 
