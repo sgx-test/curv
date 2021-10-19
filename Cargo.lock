@@ -28,9 +28,9 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "base64"
-version = "0.12.3"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3441f0f7b02788e948e47f457ca01f1d7e6d92c693bc132c22b087d3141c03ff"
+checksum = "b41b7ea54a0c9d92199de89e20e58d49f02f8e699814ef3fdf266f6f748d15c7"
 
 [[package]]
 name = "bincode"
@@ -185,16 +185,6 @@ checksum = "4434400df11d95d556bac068ddfedd482915eb18fe8bea89bc80b6e4b1c179e5"
 dependencies = [
  "generic-array 0.12.4",
  "subtle 1.0.0",
-]
-
-[[package]]
-name = "crypto-mac"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
-dependencies = [
- "generic-array 0.14.4",
- "subtle 2.4.1",
 ]
 
 [[package]]
@@ -457,16 +447,6 @@ dependencies = [
 
 [[package]]
 name = "hmac"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "126888268dcc288495a26bf004b38c5fdbb31682f992c84ceb046a1f0fe38840"
-dependencies = [
- "crypto-mac 0.8.0",
- "digest 0.9.0",
-]
-
-[[package]]
-name = "hmac"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "deae6d9dbb35ec2c502d62b8f7b1c000a0822c3b0794ba36b3149c0a1c840dff"
@@ -477,13 +457,13 @@ dependencies = [
 
 [[package]]
 name = "hmac-drbg"
-version = "0.3.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17ea0a1394df5b6574da6e0c1ade9e78868c9fb0a4e5ef4428e32da4676b85b1"
+checksum = "c6e570451493f10f6581b48cdd530413b63ea9e780f544bfd3bdcaa0d89d1a7b"
 dependencies = [
- "digest 0.9.0",
- "generic-array 0.14.4",
- "hmac 0.8.1",
+ "digest 0.8.1",
+ "generic-array 0.12.4",
+ "hmac 0.7.1",
 ]
 
 [[package]]
@@ -512,46 +492,19 @@ checksum = "320cfe77175da3a483efed4bc0adc1968ca050b098ce4f2f1c13a56626128790"
 
 [[package]]
 name = "libsecp256k1"
-version = "0.4.0"
-source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx-struct#2510cfdb984b09d2885c3b81b923f8f95a975f0c"
+version = "0.3.5"
+source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx-struct#48b466d32851227f8a16e7e5e69c5d9438c7d55e"
 dependencies = [
  "arrayref",
  "base64",
- "digest 0.9.0",
+ "crunchy",
+ "digest 0.8.1",
  "hmac-drbg",
- "libsecp256k1-core",
- "libsecp256k1-gen-ecmult",
- "libsecp256k1-gen-genmult",
  "rand 0.6.5",
  "serde",
- "sha2 0.9.5",
- "typenum",
-]
-
-[[package]]
-name = "libsecp256k1-core"
-version = "0.1.0"
-source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx-struct#2510cfdb984b09d2885c3b81b923f8f95a975f0c"
-dependencies = [
- "crunchy",
- "digest 0.9.0",
+ "sha2 0.8.2",
  "subtle 2.4.1",
-]
-
-[[package]]
-name = "libsecp256k1-gen-ecmult"
-version = "0.1.0"
-source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx-struct#2510cfdb984b09d2885c3b81b923f8f95a975f0c"
-dependencies = [
- "libsecp256k1-core",
-]
-
-[[package]]
-name = "libsecp256k1-gen-genmult"
-version = "0.1.0"
-source = "git+https://github.com/sgx-test/libsecp256k1-sgx?branch=0.3.5-sgx-struct#2510cfdb984b09d2885c3b81b923f8f95a975f0c"
-dependencies = [
- "libsecp256k1-core",
+ "typenum",
 ]
 
 [[package]]
