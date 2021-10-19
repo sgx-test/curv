@@ -51,12 +51,12 @@ branch = "0.3.5-sgx-struct"
 version = "0.5"
 features = ["ecdsa"]
 
-#[dev-dependencies]
-#bincode = "1.1"
-#serde_json = "1.0"
-#paste = "1.0.2"
-#proptest = "0.10"
-#proptest-derive = "0.2"
+[dev-dependencies]
+bincode = "1.1"
+serde_json = "1.0"
+paste = "1.0.2"
+proptest = "0.10"
+proptest-derive = "0.2"
 
 [features]
 default = ["num-bigint"]
