@@ -6,7 +6,7 @@ use crate::BigInt;
 use crate::ErrorKey;
 use generic_array::typenum::U32;
 use generic_array::GenericArray;
-use p256::ecdsa::VerifyKey;
+pub use p256::ecdsa::{VerifyKey, SigningKey, signature::Signer, signature::Verifier};
 use p256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use p256::{AffinePoint, EncodedPoint, ProjectivePoint, Scalar};
 use rand::{thread_rng, Rng};
