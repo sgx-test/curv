@@ -750,6 +750,7 @@ mod tests {
 
     use crate::elliptic::curves::secp256_k1::{FE, GE};
     use crate::ErrorKey;
+    use num_bigint::BigInt;
 
     #[test]
     fn test_serdes_pk() {
@@ -891,4 +892,13 @@ mod tests {
             base_point2
         );
     }
+
+    #[test]
+    fn test_zero_scalar() {
+        let a: FE = ECScalar::zero();
+        let a_big = a.to_big_int();
+        let big = BigInt::from(0u64);
+        assert_eq!(a_big, big);
+    }
+
 }
