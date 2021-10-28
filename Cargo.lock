@@ -203,7 +203,7 @@ dependencies = [
  "rand",
  "ring-algorithm",
  "rust-crypto",
- "rust-gmp-kzen",
+ "rust-gmp",
  "serde 1.0.118",
  "serde_derive 1.0.118",
  "sgx_tstd",
@@ -626,10 +626,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-gmp-kzen"
+name = "rust-gmp"
 version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e654bb304958a567aefa09e83cc313251388202c40bfc245fac19a0e2dd8d08"
+source = "git+https://github.com/sgx-test/rust-gmp?branch=sgx#aad96249a962c1cf783b330c313cc2004659a6a8"
 dependencies = [
  "libc",
  "num-traits",
