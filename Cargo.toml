@@ -48,6 +48,6 @@ p256 = { version = "0.5", features = ["ecdsa"], git = "https://github.com/sgx-te
 [features]
 default = ["gmp","mesalock_sgx"]
 bigint = ["num-bigint"]
-gmp = ["rust-gmp-kzen"]
+gmp = ["rust-gmp"]
 mesalock_sgx = ["sgx_tstd"]
 bigint-sgx = ["mesalock_sgx","bigint"]
