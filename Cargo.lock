@@ -194,7 +194,6 @@ dependencies = [
  "hmac 0.7.1",
  "lazy_static",
  "libsecp256k1",
- "merkle-sha3",
  "num-bigint 0.4.0 (git+https://github.com/sgx-test/num-bigint-sgx)",
  "num-integer",
  "num-traits",
@@ -202,7 +201,6 @@ dependencies = [
  "pairing-plus",
  "rand",
  "ring-algorithm",
- "rust-crypto",
  "rust-gmp",
  "serde 1.0.118",
  "serde_derive 1.0.118",
@@ -451,15 +449,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merkle-sha3"
-version = "0.1.0"
-source = "git+https://github.com/sgx-test/merkle-sha3-sgx#26d7b1641771cba2d12b620ad12ecce87e0cb39a"
-dependencies = [
- "rust-crypto",
- "sgx_tstd",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -614,18 +603,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-crypto"
-version = "0.2.36"
-source = "git+https://github.com/mesalock-linux/rust-crypto-sgx#4cdd9f96e39bd0b6a018f3a397a037a1e5a7de9f"
-dependencies = [
- "cc",
- "rustc-serialize",
- "sgx_rand",
- "sgx_tstd",
- "sgx_types",
-]
-
-[[package]]
 name = "rust-gmp"
 version = "0.5.1"
 source = "git+https://github.com/sgx-test/rust-gmp?branch=sgx#aad96249a962c1cf783b330c313cc2004659a6a8"
@@ -633,14 +610,6 @@ dependencies = [
  "libc",
  "num-traits",
  "serde 1.0.126",
-]
-
-[[package]]
-name = "rustc-serialize"
-version = "0.3.24"
-source = "git+https://github.com/mesalock-linux/rustc-serialize-sgx#674da51fd201667546d2b88c7c166fc99fe23374"
-dependencies = [
- "sgx_tstd",
 ]
 
 [[package]]
@@ -712,16 +681,6 @@ name = "sgx_libc"
 version = "1.1.3"
 source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.3#a6a172e652b4db4eaa17e4faa078fda8922abdd0"
 dependencies = [
- "sgx_types",
-]
-
-[[package]]
-name = "sgx_rand"
-version = "1.1.3"
-source = "git+https://github.com/apache/teaclave-sgx-sdk.git?rev=v1.1.3#a6a172e652b4db4eaa17e4faa078fda8922abdd0"
-dependencies = [
- "sgx_trts",
- "sgx_tstd",
  "sgx_types",
 ]
 

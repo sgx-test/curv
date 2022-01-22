@@ -9,11 +9,13 @@
 #![no_std]
 use std::prelude::v1::*;
 use std::marker::PhantomData;
-
-use crypto::sha3::Sha3;
-use merkle::{MerkleTree, Proof};
+use digest::{Digest, Output};
+// use crypto::sha3::Sha3;
+// use merkle::{MerkleTree, Proof};
 
 use crate::elliptic::curves::traits::ECPoint;
+use merkle_cbt::merkle_tree::{Merge, MerkleProof, MerkleTree, CBMT};
+
 /*
 pub struct MT256<'a> {
     tree: MerkleTree<GE>,
