@@ -59,4 +59,4 @@ proptest = "0.10"
 proptest-derive = "0.2"
 
 [features]
-default = ["num-bigint"]
+default = ["rust-gmp-kzen"]
