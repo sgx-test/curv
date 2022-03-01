@@ -512,8 +512,8 @@ dependencies = [
 
 [[package]]
 name = "pairing-plus"
-version = "0.19.0"
-source = "git+https://github.com/sgx-test/pairing-plus-sgx#33169d7f1cb3f0717fc31b83d455ae9785bd99fc"
+version = "0.20.1"
+source = "git+https://github.com/sgx-test/pairing-plus-sgx?branch=upgrade#c49252ba7388ccc6ed928d97ad0a3213555ec159"
 dependencies = [
  "byteorder 1.4.3 (git+https://github.com/sgx-test/digest-sgx)",
  "digest 0.8.1",
