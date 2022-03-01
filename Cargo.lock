@@ -566,9 +566,8 @@ dependencies = [
 
 [[package]]
 name = "pairing-plus"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58cda4f22e8e6720f3c254049960c8cc4f93cb82b5ade43bddd2622b5f39ea62"
+version = "0.20.1"
+source = "git+https://github.com/algorand/pairing-plus.git#0e8527e93465776618421c4ec02c49a5b17a26d2"
 dependencies = [
  "byteorder",
  "digest 0.8.1",
