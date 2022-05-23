@@ -75,6 +75,10 @@ impl ECScalar for Ed25519Scalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -212,8 +216,8 @@ impl<'o> Add<&'o Ed25519Scalar> for Ed25519Scalar {
 
 impl Serialize for Ed25519Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -221,8 +225,8 @@ impl Serialize for Ed25519Scalar {
 
 impl<'de> Deserialize<'de> for Ed25519Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Ed25519Scalar, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Ed25519ScalarVisitor)
     }
@@ -272,6 +276,20 @@ impl ECPoint for Ed25519Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Ed25519Scalar;
+
+    fn zero() -> Ed25519Point {
+        Ed25519Point {
+            purpose: "zero",
+            ge: ge_scalarmult_base(&[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ]),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Ed25519Point {
         let g: GE = ECPoint::generator();
@@ -485,8 +503,8 @@ impl Hashable for Ed25519Point {
 
 impl Serialize for Ed25519Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -499,8 +517,8 @@ impl Serialize for Ed25519Point {
 
 impl<'de> Deserialize<'de> for Ed25519Point {
     fn deserialize<D>(deserializer: D) -> Result<Ed25519Point, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         let fields = &["bytes_str"];
         deserializer.deserialize_struct("Ed25519Point", fields, Ed25519PointVisitor)
@@ -517,8 +535,8 @@ impl<'de> Visitor<'de> for Ed25519PointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<Ed25519Point, V::Error>
-    where
-        V: SeqAccess<'de>,
+        where
+            V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?

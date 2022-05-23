@@ -16,6 +16,7 @@ use curve25519_dalek::constants::BASEPOINT_ORDER;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_COMPRESSED;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
+use curve25519_dalek::traits::{IsIdentity, Identity};
 use rand::thread_rng;
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -79,6 +80,10 @@ impl ECScalar for RistrettoScalar {
             purpose: "zero",
             fe: q_fe.get_element(),
         }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
     }
 
     fn get_element(&self) -> SK {
@@ -200,8 +205,8 @@ impl<'o> Add<&'o RistrettoScalar> for RistrettoScalar {
 
 impl Serialize for RistrettoScalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -209,8 +214,8 @@ impl Serialize for RistrettoScalar {
 
 impl<'de> Deserialize<'de> for RistrettoScalar {
     fn deserialize<D>(deserializer: D) -> Result<RistrettoScalar, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256k1ScalarVisitor)
     }
@@ -255,6 +260,17 @@ impl ECPoint for RistrettoCurvPoint {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = RistrettoScalar;
+
+    fn zero() -> Self {
+        RistrettoCurvPoint {
+            purpose: "zero",
+            ge: PK::identity(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.ge.is_identity()
+    }
 
     fn base_point2() -> RistrettoCurvPoint {
         let g: GE = ECPoint::generator();
@@ -424,8 +440,8 @@ impl Hashable for RistrettoCurvPoint {
 
 impl Serialize for RistrettoCurvPoint {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -437,8 +453,8 @@ impl Serialize for RistrettoCurvPoint {
 
 impl<'de> Deserialize<'de> for RistrettoCurvPoint {
     fn deserialize<D>(deserializer: D) -> Result<RistrettoCurvPoint, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         const FIELDS: &[&str] = &["bytes_str"];
         deserializer.deserialize_struct("RistrettoCurvPoint", FIELDS, RistrettoCurvPointVisitor)
@@ -455,8 +471,8 @@ impl<'de> Visitor<'de> for RistrettoCurvPointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<RistrettoCurvPoint, V::Error>
-    where
-        V: SeqAccess<'de>,
+        where
+            V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?

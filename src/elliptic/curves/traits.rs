@@ -15,6 +15,7 @@ pub trait ECScalar: Mul<Output = Self> + Add<Output = Self> + Sized {
 
     fn new_random() -> Self;
     fn zero() -> Self;
+    fn is_zero(&self) -> bool;
     fn get_element(&self) -> Self::SecretKey;
     fn set_element(&mut self, element: Self::SecretKey);
     fn from(n: &BigInt) -> Self;
@@ -28,15 +29,17 @@ pub trait ECScalar: Mul<Output = Self> + Add<Output = Self> + Sized {
 
 // TODO: add a fn is_point
 pub trait ECPoint:
-    Mul<<Self as ECPoint>::Scalar, Output = Self> + Add<Output = Self> + PartialEq
-where
-    Self: Sized,
+Mul<<Self as ECPoint>::Scalar, Output = Self> + Add<Output = Self> + PartialEq
+    where
+        Self: Sized,
 {
     type SecretKey;
     type PublicKey;
 
     type Scalar: ECScalar<SecretKey = Self::SecretKey>;
 
+    fn zero() -> Self;
+    fn is_zero(&self) -> bool;
     fn base_point2() -> Self;
     fn generator() -> Self;
     fn get_element(&self) -> Self::PublicKey;

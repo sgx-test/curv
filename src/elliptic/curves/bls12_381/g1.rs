@@ -84,6 +84,10 @@ impl ECScalar for FieldScalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -230,8 +234,8 @@ impl<'o> Add<&'o FieldScalar> for FieldScalar {
 
 impl Serialize for FieldScalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -239,8 +243,8 @@ impl Serialize for FieldScalar {
 
 impl<'de> Deserialize<'de> for FieldScalar {
     fn deserialize<D>(deserializer: D) -> Result<FieldScalar, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(BLS12_381ScalarVisitor)
     }
@@ -290,6 +294,17 @@ impl ECPoint for G1Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = FieldScalar;
+
+    fn zero() -> Self {
+        G1Point {
+            purpose: "zero",
+            ge: PK::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.ge.is_zero()
+    }
 
     fn base_point2() -> G1Point {
         const BASE_POINT2: [u8; 96] = [
@@ -472,8 +487,8 @@ impl Hashable for G1Point {
 
 impl Serialize for G1Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -485,8 +500,8 @@ impl Serialize for G1Point {
 
 impl<'de> Deserialize<'de> for G1Point {
     fn deserialize<D>(deserializer: D) -> Result<G1Point, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         const FIELDS: &[&str] = &["bytes_str"];
         deserializer.deserialize_struct("Bls12381G1Point", FIELDS, Bls12381G1PointVisitor)
@@ -503,8 +518,8 @@ impl<'de> Visitor<'de> for Bls12381G1PointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<G1Point, V::Error>
-    where
-        V: SeqAccess<'de>,
+        where
+            V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?

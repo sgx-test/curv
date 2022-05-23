@@ -78,6 +78,10 @@ impl ECScalar for Secp256r1Scalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        bool::from(self.fe.is_zero())
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -191,8 +195,8 @@ impl<'o> Sub<&'o Secp256r1Scalar> for Secp256r1Scalar {
 
 impl Serialize for Secp256r1Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&format!("{:0>64}", self.to_big_int().to_hex()))
     }
@@ -200,8 +204,8 @@ impl Serialize for Secp256r1Scalar {
 
 impl<'de> Deserialize<'de> for Secp256r1Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Secp256r1Scalar, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256r1ScalarVisitor)
     }
@@ -240,6 +244,19 @@ impl ECPoint for Secp256r1Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Secp256r1Scalar;
+
+    fn zero() -> Secp256r1Point {
+        let new_point = AffinePoint::identity().to_encoded_point(false);
+        let verify_key = VerifyKey::from_encoded_point(&new_point).unwrap();
+        Secp256r1Point {
+            purpose: "zero",
+            ge: verify_key
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Secp256r1Point {
         let mut v = vec![4_u8];
@@ -316,7 +333,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(
                 &(point1 + point2).to_affine().to_encoded_point(true),
             )
-            .unwrap(),
+                .unwrap(),
         }
     }
 
@@ -332,7 +349,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(
                 &(point1 - point2).to_affine().to_encoded_point(true),
             )
-            .unwrap(),
+                .unwrap(),
         }
     }
 
@@ -362,7 +379,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(&EncodedPoint::from_affine_coordinates(
                 &x_arr, &y_arr, false,
             ))
-            .unwrap(),
+                .unwrap(),
         }
     }
 }
@@ -444,8 +461,8 @@ impl<'o> Sub<&'o Secp256r1Point> for &'o Secp256r1Point {
 
 impl Serialize for Secp256r1Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         serializer.serialize_str(&format!(
             "{:0>66}",
@@ -456,8 +473,8 @@ impl Serialize for Secp256r1Point {
 
 impl<'de> Deserialize<'de> for Secp256r1Point {
     fn deserialize<D>(deserializer: D) -> Result<Secp256r1Point, D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256r1PointVisitor)
     }
@@ -473,8 +490,8 @@ impl<'de> Visitor<'de> for Secp256r1PointVisitor {
     }
 
     fn visit_str<E>(self, s: &str) -> Result<Secp256r1Point, E>
-    where
-        E: de::Error,
+        where
+            E: de::Error,
     {
         let bn = BigInt::from_hex(s).map_err(E::custom)?;
         match Secp256r1Point::from_bigint(&bn) {
@@ -521,23 +538,23 @@ mod tests {
         let vx = BigInt::from_hex(
             &"9e6b4c9775d5af0aff94a55035a2b039f7cfc19b9e67004f190ddfaada82b405".to_string(),
         )
-        .unwrap();
+            .unwrap();
 
         let vy = BigInt::from_hex(
             &"d3fa4d180ea04d8da373bb61782bc6b509f7b6e374d6a47b253e4853ad1cd5fc".to_string(),
         )
-        .unwrap();
+            .unwrap();
         Secp256r1Point::from_coor(&vx, &vy); // x and y of size 32
 
         let x = BigInt::from_hex(
             &"2d054d254d1d112b1e7a134780ae7975a2a57b35089b2afa45dc42ed9afe1b".to_string(),
         )
-        .unwrap();
+            .unwrap();
 
         let y = BigInt::from_hex(
             &"16f436c897a9733a4d83eed96147b273348c98fb680d7361d915ec6b5ce761ca".to_string(),
         )
-        .unwrap();
+            .unwrap();
         Secp256r1Point::from_coor(&x, &y); // x and y not of size 32 each
 
         let r = random_point();
@@ -789,7 +806,7 @@ mod tests {
                 &base_point2.x_coor().unwrap(),
                 &base_point2.y_coor().unwrap()
             )
-            .get_element(),
+                .get_element(),
             base_point2.get_element()
         );
     }
