@@ -216,8 +216,8 @@ impl<'o> Add<&'o Ed25519Scalar> for Ed25519Scalar {
 
 impl Serialize for Ed25519Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -225,8 +225,8 @@ impl Serialize for Ed25519Scalar {
 
 impl<'de> Deserialize<'de> for Ed25519Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Ed25519Scalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Ed25519ScalarVisitor)
     }
@@ -503,8 +503,8 @@ impl Hashable for Ed25519Point {
 
 impl Serialize for Ed25519Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -517,8 +517,8 @@ impl Serialize for Ed25519Point {
 
 impl<'de> Deserialize<'de> for Ed25519Point {
     fn deserialize<D>(deserializer: D) -> Result<Ed25519Point, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let fields = &["bytes_str"];
         deserializer.deserialize_struct("Ed25519Point", fields, Ed25519PointVisitor)
@@ -535,8 +535,8 @@ impl<'de> Visitor<'de> for Ed25519PointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<Ed25519Point, V::Error>
-        where
-            V: SeqAccess<'de>,
+    where
+        V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?
@@ -624,6 +624,20 @@ mod tests {
 
     type GE = Ed25519Point;
     type FE = Ed25519Scalar;
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = FE::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = GE::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
 
     #[test]
     #[allow(clippy::op_ref)] // Enables type inference.

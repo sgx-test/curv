@@ -236,8 +236,8 @@ impl<'o> Add<&'o FieldScalar> for FieldScalar {
 
 impl Serialize for FieldScalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -245,8 +245,8 @@ impl Serialize for FieldScalar {
 
 impl<'de> Deserialize<'de> for FieldScalar {
     fn deserialize<D>(deserializer: D) -> Result<FieldScalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(BLS12_381ScalarVisitor)
     }
@@ -496,8 +496,8 @@ impl Hashable for G2Point {
 
 impl Serialize for G2Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -509,8 +509,8 @@ impl Serialize for G2Point {
 
 impl<'de> Deserialize<'de> for G2Point {
     fn deserialize<D>(deserializer: D) -> Result<G2Point, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         const FIELDS: &[&str] = &["bytes_str"];
         deserializer.deserialize_struct("Bls12381G2Point", FIELDS, Bls12381G2PointVisitor)
@@ -527,8 +527,8 @@ impl<'de> Visitor<'de> for Bls12381G2PointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<G2Point, V::Error>
-        where
-            V: SeqAccess<'de>,
+    where
+        V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?
@@ -564,7 +564,7 @@ impl G2Point {
     ///
     /// [xmd]: https://www.ietf.org/id/draft-irtf-cfrg-hash-to-curve-10.html#name-expand_message_xmd-2
     pub fn hash_to_curve(message: &[u8]) -> Self {
-        let cs:&[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
+        let cs: &[u8] = b"BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
         let point = <G2 as HashToCurve<ExpandMsgXmd<Sha256>>>::hash_to_curve(message, cs);
         G2Point {
             purpose: "hash_to_curve",
@@ -587,6 +587,20 @@ mod tests {
     use crate::elliptic::curves::traits::ECPoint;
     use crate::elliptic::curves::traits::ECScalar;
     use crate::BigInt;
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = FE::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = G2Point::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
 
     #[test]
     fn test_serdes_pk() {
@@ -744,8 +758,8 @@ mod tests {
         println!("Uncompressed base_point2: {:?}", point_uncompressed);
 
         // TODO https://github.com/algorand/pairing-plus/pull/17
-        // Because this PR leads to different signature content, 
-        // which cannot be the basis point. However, the latest 
+        // Because this PR leads to different signature content,
+        // which cannot be the basis point. However, the latest
         // code works on Filecoin, so it's commented here.
         // // Check that ECPoint::base_point2() returns generated point
         // let base_point2: GE = ECPoint::base_point2();

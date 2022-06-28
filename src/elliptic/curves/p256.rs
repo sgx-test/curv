@@ -6,7 +6,7 @@ use crate::BigInt;
 use crate::ErrorKey;
 use generic_array::typenum::U32;
 use generic_array::GenericArray;
-pub use p256::ecdsa::{VerifyKey, SigningKey, signature::Signer, signature::Verifier};
+pub use p256::ecdsa::{signature::Signer, signature::Verifier, SigningKey, VerifyKey};
 use p256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use p256::{AffinePoint, EncodedPoint, ProjectivePoint, Scalar};
 use rand::{thread_rng, Rng};
@@ -31,7 +31,7 @@ pub struct Secp256r1Scalar {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Secp256r1Point {
     purpose: &'static str,
-    ge: PK,
+    pub ge: PK,
 }
 pub type GE = Secp256r1Point;
 pub type FE = Secp256r1Scalar;
@@ -195,8 +195,8 @@ impl<'o> Sub<&'o Secp256r1Scalar> for Secp256r1Scalar {
 
 impl Serialize for Secp256r1Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&format!("{:0>64}", self.to_big_int().to_hex()))
     }
@@ -204,8 +204,8 @@ impl Serialize for Secp256r1Scalar {
 
 impl<'de> Deserialize<'de> for Secp256r1Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Secp256r1Scalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256r1ScalarVisitor)
     }
@@ -250,11 +250,12 @@ impl ECPoint for Secp256r1Point {
         let verify_key = VerifyKey::from_encoded_point(&new_point).unwrap();
         Secp256r1Point {
             purpose: "zero",
-            ge: verify_key
+            ge: verify_key,
         }
     }
 
     fn is_zero(&self) -> bool {
+        // bool::from(self.ge.is_identity())
         self == &Self::zero()
     }
 
@@ -333,7 +334,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(
                 &(point1 + point2).to_affine().to_encoded_point(true),
             )
-                .unwrap(),
+            .unwrap(),
         }
     }
 
@@ -349,7 +350,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(
                 &(point1 - point2).to_affine().to_encoded_point(true),
             )
-                .unwrap(),
+            .unwrap(),
         }
     }
 
@@ -379,7 +380,7 @@ impl ECPoint for Secp256r1Point {
             ge: VerifyKey::from_encoded_point(&EncodedPoint::from_affine_coordinates(
                 &x_arr, &y_arr, false,
             ))
-                .unwrap(),
+            .unwrap(),
         }
     }
 }
@@ -461,8 +462,8 @@ impl<'o> Sub<&'o Secp256r1Point> for &'o Secp256r1Point {
 
 impl Serialize for Secp256r1Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&format!(
             "{:0>66}",
@@ -473,8 +474,8 @@ impl Serialize for Secp256r1Point {
 
 impl<'de> Deserialize<'de> for Secp256r1Point {
     fn deserialize<D>(deserializer: D) -> Result<Secp256r1Point, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256r1PointVisitor)
     }
@@ -490,8 +491,8 @@ impl<'de> Visitor<'de> for Secp256r1PointVisitor {
     }
 
     fn visit_str<E>(self, s: &str) -> Result<Secp256r1Point, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         let bn = BigInt::from_hex(s).map_err(E::custom)?;
         match Secp256r1Point::from_bigint(&bn) {
@@ -524,6 +525,21 @@ mod tests {
     }
 
     #[test]
+    fn test_is_zero() {
+        let f_l = Secp256r1Scalar::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = Secp256r1Point::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        println!("p_l: {:?}\np_s: {:?}", p_l, p_s);
+        // assert!(p_s.is_zero());
+    }
+
+    #[test]
     fn serialize_sk() {
         let scalar: Secp256r1Scalar = ECScalar::from(&BigInt::from(123456));
         let s = serde_json::to_string(&scalar).expect("Failed in serialization");
@@ -538,23 +554,23 @@ mod tests {
         let vx = BigInt::from_hex(
             &"9e6b4c9775d5af0aff94a55035a2b039f7cfc19b9e67004f190ddfaada82b405".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let vy = BigInt::from_hex(
             &"d3fa4d180ea04d8da373bb61782bc6b509f7b6e374d6a47b253e4853ad1cd5fc".to_string(),
         )
-            .unwrap();
+        .unwrap();
         Secp256r1Point::from_coor(&vx, &vy); // x and y of size 32
 
         let x = BigInt::from_hex(
             &"2d054d254d1d112b1e7a134780ae7975a2a57b35089b2afa45dc42ed9afe1b".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let y = BigInt::from_hex(
             &"16f436c897a9733a4d83eed96147b273348c98fb680d7361d915ec6b5ce761ca".to_string(),
         )
-            .unwrap();
+        .unwrap();
         Secp256r1Point::from_coor(&x, &y); // x and y not of size 32 each
 
         let r = random_point();
@@ -806,7 +822,7 @@ mod tests {
                 &base_point2.x_coor().unwrap(),
                 &base_point2.y_coor().unwrap()
             )
-                .get_element(),
+            .get_element(),
             base_point2.get_element()
         );
     }

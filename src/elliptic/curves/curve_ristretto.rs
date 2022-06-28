@@ -16,7 +16,7 @@ use curve25519_dalek::constants::BASEPOINT_ORDER;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_COMPRESSED;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
-use curve25519_dalek::traits::{IsIdentity, Identity};
+use curve25519_dalek::traits::{Identity, IsIdentity};
 use rand::thread_rng;
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -205,8 +205,8 @@ impl<'o> Add<&'o RistrettoScalar> for RistrettoScalar {
 
 impl Serialize for RistrettoScalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -214,8 +214,8 @@ impl Serialize for RistrettoScalar {
 
 impl<'de> Deserialize<'de> for RistrettoScalar {
     fn deserialize<D>(deserializer: D) -> Result<RistrettoScalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256k1ScalarVisitor)
     }
@@ -440,8 +440,8 @@ impl Hashable for RistrettoCurvPoint {
 
 impl Serialize for RistrettoCurvPoint {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let bytes = self.pk_to_key_slice();
         let bytes_as_bn = BigInt::from_bytes(&bytes[..]);
@@ -453,8 +453,8 @@ impl Serialize for RistrettoCurvPoint {
 
 impl<'de> Deserialize<'de> for RistrettoCurvPoint {
     fn deserialize<D>(deserializer: D) -> Result<RistrettoCurvPoint, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         const FIELDS: &[&str] = &["bytes_str"];
         deserializer.deserialize_struct("RistrettoCurvPoint", FIELDS, RistrettoCurvPointVisitor)
@@ -471,8 +471,8 @@ impl<'de> Visitor<'de> for RistrettoCurvPointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<RistrettoCurvPoint, V::Error>
-        where
-            V: SeqAccess<'de>,
+    where
+        V: SeqAccess<'de>,
     {
         let bytes_str = seq
             .next_element()?
@@ -513,6 +513,20 @@ mod tests {
 
     type GE = RistrettoCurvPoint;
     type FE = RistrettoScalar;
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = RistrettoScalar::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = RistrettoCurvPoint::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
 
     #[test]
     fn test_serdes_pk() {

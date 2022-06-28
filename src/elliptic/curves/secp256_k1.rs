@@ -35,8 +35,8 @@ use rand::thread_rng;
 //};
 //use secp256k1::{PublicKey, Secp256k1, SecretKey, VerifyOnly};
 
-use secp256k1::{PublicKey, SecretKey};
 use secp256k1::curve::Scalar;
+use secp256k1::{PublicKey, SecretKey};
 
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -243,8 +243,8 @@ impl<'o> Add<&'o Secp256k1Scalar> for Secp256k1Scalar {
 
 impl Serialize for Secp256k1Scalar {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_big_int().to_hex())
     }
@@ -252,8 +252,8 @@ impl Serialize for Secp256k1Scalar {
 
 impl<'de> Deserialize<'de> for Secp256k1Scalar {
     fn deserialize<D>(deserializer: D) -> Result<Secp256k1Scalar, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_str(Secp256k1ScalarVisitor)
     }
@@ -316,7 +316,7 @@ impl ECPoint for Secp256k1Point {
         v.extend(BASE_POINT2_Y.as_ref());
         Secp256k1Point {
             purpose: "random",
-            ge: Some(PK::parse_slice(&v,None).unwrap()),
+            ge: Some(PK::parse_slice(&v, None).unwrap()),
         }
     }
 
@@ -326,7 +326,7 @@ impl ECPoint for Secp256k1Point {
         v.extend(GENERATOR_Y.as_ref());
         Secp256k1Point {
             purpose: "base_fe",
-            ge: Some(PK::parse_slice(&v,None).unwrap()),
+            ge: Some(PK::parse_slice(&v, None).unwrap()),
         }
     }
 
@@ -344,7 +344,7 @@ impl ECPoint for Secp256k1Point {
                 let serial = ge.serialize_compressed();
                 BigInt::from_bytes(&serial[0..33])
             }
-            None => BigInt::zero()
+            None => BigInt::zero(),
         }
     }
 
@@ -356,7 +356,7 @@ impl ECPoint for Secp256k1Point {
                 let x_vec = x.to_vec();
                 Some(BigInt::from_bytes(&x_vec[..]))
             }
-            None => None
+            None => None,
         }
     }
 
@@ -368,7 +368,7 @@ impl ECPoint for Secp256k1Point {
                 let y_vec = y.to_vec();
                 Some(BigInt::from_bytes(&y_vec[..]))
             }
-            None => None
+            None => None,
         }
     }
 
@@ -391,13 +391,15 @@ impl ECPoint for Secp256k1Point {
                 let ge = if bytes_array_65[1..] == [0u8; 64] {
                     None
                 } else {
-                    let result = PK::parse_slice(&bytes_array_65,None);
-                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    let result = PK::parse_slice(&bytes_array_65, None);
+                    if result.is_err() {
+                        return Err(ErrorKey::InvalidPublicKey);
+                    }
                     Some(result.unwrap())
                 };
                 Ok(Secp256k1Point {
                     purpose: "random",
-                    ge
+                    ge,
                 })
             }
 
@@ -413,8 +415,10 @@ impl ECPoint for Secp256k1Point {
                 let ge = if bytes_array_33[1..] == [0u8; 32] {
                     None
                 } else {
-                    let result = PK::parse_slice(&bytes_array_33,None);
-                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    let result = PK::parse_slice(&bytes_array_33, None);
+                    if result.is_err() {
+                        return Err(ErrorKey::InvalidPublicKey);
+                    }
                     Some(result.unwrap())
                 };
                 Ok(Secp256k1Point {
@@ -434,8 +438,10 @@ impl ECPoint for Secp256k1Point {
                 let ge = if bytes_array_65[1..] == [0u8; 64] {
                     None
                 } else {
-                    let result = PK::parse_slice(&bytes_array_65,None);
-                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    let result = PK::parse_slice(&bytes_array_65, None);
+                    if result.is_err() {
+                        return Err(ErrorKey::InvalidPublicKey);
+                    }
                     Some(result.unwrap())
                 };
                 Ok(Secp256k1Point {
@@ -483,10 +489,10 @@ impl ECPoint for Secp256k1Point {
         let ge = match (&self.ge, other) {
             (None, right) => *right,
             (left, None) => *left,
-            (Some(left), Some(right)) => match PK::combine(&[left.clone(),right.clone()]) {
+            (Some(left), Some(right)) => match PK::combine(&[left.clone(), right.clone()]) {
                 Ok(pk) => Some(pk),
-                Err(_) => None
-            }
+                Err(_) => None,
+            },
         };
         Secp256k1Point {
             purpose: "combine",
@@ -502,8 +508,8 @@ impl ECPoint for Secp256k1Point {
                     ge: Some(*ge),
                 };
                 let p: Vec<u8> = vec![
-                    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-                    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 255, 255, 252, 47,
+                    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254, 255, 255, 252, 47,
                 ];
                 let order = BigInt::from_bytes(&p[..]);
                 let x = point.x_coor().unwrap();
@@ -528,11 +534,14 @@ impl ECPoint for Secp256k1Point {
             }
             None => Secp256k1Point {
                 purpose: "sub_point",
-                ge: None
-            }
+                ge: None,
+            },
         };
         let ge = ECPoint::add_point(self, &minus_point.get_element()).ge;
-        Secp256k1Point { purpose: "sub_point", ge }
+        Secp256k1Point {
+            purpose: "sub_point",
+            ge,
+        }
     }
 
     fn from_coor(x: &BigInt, y: &BigInt) -> Secp256k1Point {
@@ -562,14 +571,14 @@ impl ECPoint for Secp256k1Point {
         v.extend(vec_y);
         let mut tmp = v.clone();
         tmp.remove(0);
-        let ge = if tmp ==  vec![0; v.len() - 1 as usize] {
+        let ge = if tmp == vec![0; v.len() - 1 as usize] {
             None
         } else {
-            Some(PK::parse_slice(&v,None).unwrap())
+            Some(PK::parse_slice(&v, None).unwrap())
         };
         Secp256k1Point {
             purpose: "base_fe",
-            ge
+            ge,
         }
     }
 }
@@ -635,8 +644,8 @@ impl<'o> Add<&'o Secp256k1Point> for &'o Secp256k1Point {
 
 impl Serialize for Secp256k1Point {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let mut state = serializer.serialize_struct("Secp256k1Point", 2)?;
         state.serialize_field("x", &self.x_coor().unwrap().to_hex())?;
@@ -647,8 +656,8 @@ impl Serialize for Secp256k1Point {
 
 impl<'de> Deserialize<'de> for Secp256k1Point {
     fn deserialize<D>(deserializer: D) -> Result<Secp256k1Point, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let fields = &["x", "y"];
         deserializer.deserialize_struct("Secp256k1Point", fields, Secp256k1PointVisitor)
@@ -665,8 +674,8 @@ impl<'de> Visitor<'de> for Secp256k1PointVisitor {
     }
 
     fn visit_seq<V>(self, mut seq: V) -> Result<Secp256k1Point, V::Error>
-        where
-            V: SeqAccess<'de>,
+    where
+        V: SeqAccess<'de>,
     {
         let x = seq
             .next_element()?
@@ -705,25 +714,19 @@ impl<'de> Visitor<'de> for Secp256k1PointVisitor {
 
 /// The order of the secp256k1 curve
 pub const CURVE_ORDER: [u8; 32] = [
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
-    0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b,
-    0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
+    0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b, 0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41,
 ];
 /// The X coordinate of the generator
 pub const GENERATOR_X: [u8; 32] = [
-    0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac,
-    0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b, 0x07,
-    0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9,
-    0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98
+    0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b, 0x07,
+    0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98,
 ];
 
 /// The Y coordinate of the generator
 pub const GENERATOR_Y: [u8; 32] = [
-    0x48, 0x3a, 0xda, 0x77, 0x26, 0xa3, 0xc4, 0x65,
-    0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08, 0xa8,
-    0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19,
-    0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8
+    0x48, 0x3a, 0xda, 0x77, 0x26, 0xa3, 0xc4, 0x65, 0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08, 0xa8,
+    0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19, 0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8,
 ];
 /// The size (in bytes) of a secret key
 pub const SECRET_KEY_SIZE: usize = 32;
@@ -746,10 +749,30 @@ mod tests {
     use crate::elliptic::curves::traits::ECScalar;
 
     #[test]
+    fn is_zero_scalar() {
+        let f_l = Secp256k1Scalar::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = Secp256k1Point::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
+
+    #[test]
     fn test_zero_point() {
-        let x_coor = BigInt::from_hex("3061d1723d83fa80d1082e1985216b59a7063873474200ce7d62a72ca8753725").unwrap();
-        let y_coor1 = BigInt::from_hex("7c8d9320237d50881ea1a12ddc75b269268b6cd08b82e1dcc13babbc720bcce9").unwrap();
-        let y_coor2 = BigInt::from_hex("83726cdfdc82af77e15e5ed2238a4d96d974932f747d1e233ec454428df42f46").unwrap();
+        let x_coor =
+            BigInt::from_hex("3061d1723d83fa80d1082e1985216b59a7063873474200ce7d62a72ca8753725")
+                .unwrap();
+        let y_coor1 =
+            BigInt::from_hex("7c8d9320237d50881ea1a12ddc75b269268b6cd08b82e1dcc13babbc720bcce9")
+                .unwrap();
+        let y_coor2 =
+            BigInt::from_hex("83726cdfdc82af77e15e5ed2238a4d96d974932f747d1e233ec454428df42f46")
+                .unwrap();
         let point1 = Secp256k1Point::from_coor(&x_coor, &y_coor1);
         let point2 = Secp256k1Point::from_coor(&x_coor, &y_coor2);
 
@@ -761,7 +784,10 @@ mod tests {
         println!("point from zero bigint: {:?}", point4);
         let point5 = GE::from_bytes(&[0; 65]).unwrap();
         println!("zero point from &[u8]: {:?}", point5);
-        println!("zero point mul scalar: {:?}", point5.scalar_mul(&Secp256k1Scalar::new_random().get_element()));
+        println!(
+            "zero point mul scalar: {:?}",
+            point5.scalar_mul(&Secp256k1Scalar::new_random().get_element())
+        );
     }
 
     #[test]
@@ -776,24 +802,24 @@ mod tests {
         let vx = BigInt::from_hex(
             &"ccaf75ab7960a01eb421c0e2705f6e84585bd0a094eb6af928c892a4a2912508".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let vy = BigInt::from_hex(
             &"e788e294bd64eee6a73d2fc966897a31eb370b7e8e9393b0d8f4f820b48048df".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         Secp256k1Point::from_coor(&vx, &vy); // x and y of size 32
 
         let x = BigInt::from_hex(
             &"5f6853305467a385b56a5d87f382abb52d10835a365ec265ce510e04b3c3366f".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         let y = BigInt::from_hex(
             &"b868891567ca1ee8c44706c0dc190dd7779fe6f9b92ced909ad870800451e3".to_string(),
         )
-            .unwrap();
+        .unwrap();
 
         Secp256k1Point::from_coor(&x, &y); // x and y not of size 32 each
 
