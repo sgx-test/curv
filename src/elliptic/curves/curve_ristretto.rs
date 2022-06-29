@@ -16,6 +16,7 @@ use curve25519_dalek::constants::BASEPOINT_ORDER;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_COMPRESSED;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
+use curve25519_dalek::traits::{Identity, IsIdentity};
 use rand::thread_rng;
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -79,6 +80,10 @@ impl ECScalar for RistrettoScalar {
             purpose: "zero",
             fe: q_fe.get_element(),
         }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
     }
 
     fn get_element(&self) -> SK {
@@ -255,6 +260,17 @@ impl ECPoint for RistrettoCurvPoint {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = RistrettoScalar;
+
+    fn zero() -> Self {
+        RistrettoCurvPoint {
+            purpose: "zero",
+            ge: PK::identity(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.ge.is_identity()
+    }
 
     fn base_point2() -> RistrettoCurvPoint {
         let g: GE = ECPoint::generator();
@@ -497,6 +513,20 @@ mod tests {
 
     type GE = RistrettoCurvPoint;
     type FE = RistrettoScalar;
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = RistrettoScalar::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = RistrettoCurvPoint::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
 
     #[test]
     fn test_serdes_pk() {

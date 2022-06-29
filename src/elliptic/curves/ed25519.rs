@@ -75,6 +75,10 @@ impl ECScalar for Ed25519Scalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -272,6 +276,20 @@ impl ECPoint for Ed25519Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Ed25519Scalar;
+
+    fn zero() -> Ed25519Point {
+        Ed25519Point {
+            purpose: "zero",
+            ge: ge_scalarmult_base(&[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ]),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Ed25519Point {
         let g: GE = ECPoint::generator();
@@ -606,6 +624,20 @@ mod tests {
 
     type GE = Ed25519Point;
     type FE = Ed25519Scalar;
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = FE::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = GE::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        assert!(p_s.is_zero());
+    }
 
     #[test]
     #[allow(clippy::op_ref)] // Enables type inference.
