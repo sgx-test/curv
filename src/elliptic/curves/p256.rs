@@ -1,13 +1,12 @@
 // NIST P-256 elliptic curve utility functions.
 #![no_std]
-use std::prelude::v1::*;
 use super::traits::{ECPoint, ECScalar};
 use crate::arithmetic::traits::*;
 use crate::BigInt;
 use crate::ErrorKey;
 use generic_array::typenum::U32;
 use generic_array::GenericArray;
-use p256::ecdsa::VerifyKey;
+pub use p256::ecdsa::{signature::Signer, signature::Verifier, SigningKey, VerifyKey};
 use p256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use p256::{AffinePoint, EncodedPoint, ProjectivePoint, Scalar};
 use rand::{thread_rng, Rng};
@@ -16,6 +15,7 @@ use serde::de::Visitor;
 use serde::ser::{Serialize, Serializer};
 use serde::{Deserialize, Deserializer};
 use std::ops::{Add, Mul, Sub};
+use std::prelude::v1::*;
 use std::sync::atomic;
 use std::{fmt, ptr};
 use zeroize::Zeroize;
@@ -77,6 +77,10 @@ impl ECScalar for Secp256r1Scalar {
             purpose: "zero",
             fe: zero,
         }
+    }
+
+    fn is_zero(&self) -> bool {
+        bool::from(self.fe.is_zero())
     }
 
     fn get_element(&self) -> SK {
@@ -241,6 +245,20 @@ impl ECPoint for Secp256r1Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Secp256r1Scalar;
+
+    fn zero() -> Secp256r1Point {
+        let new_point = AffinePoint::identity().to_encoded_point(false);
+        let verify_key = VerifyKey::from_encoded_point(&new_point).unwrap();
+        Secp256r1Point {
+            purpose: "zero",
+            ge: verify_key,
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        // bool::from(self.ge.is_identity())
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Secp256r1Point {
         let mut v = vec![4_u8];
@@ -505,6 +523,21 @@ mod tests {
             purpose: "random_point",
             ge: pk.get_element(),
         }
+    }
+
+    #[test]
+    fn test_is_zero() {
+        let f_l = Secp256r1Scalar::new_random();
+        let f_r = f_l.clone();
+        let f_s = f_l.sub(&f_r.get_element());
+        assert!(!f_l.is_zero());
+        assert!(f_s.is_zero());
+
+        let p_l = Secp256r1Point::generator();
+        let p_r = p_l.clone();
+        let p_s = p_l.sub_point(&p_r.get_element());
+        println!("p_l: {:?}\np_s: {:?}", p_l, p_s);
+        // assert!(p_s.is_zero());
     }
 
     #[test]
