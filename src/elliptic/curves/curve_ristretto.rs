@@ -17,7 +17,6 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_COMPRESSED;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::{Identity, IsIdentity};
-use rand::thread_rng;
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
 use serde::ser::{Serialize, Serializer};
@@ -68,9 +67,16 @@ impl ECScalar for RistrettoScalar {
     type SecretKey = SK;
 
     fn new_random() -> RistrettoScalar {
+        use rand::RngCore;
+        #[cfg(feature = "wasm")]
+        let mut rng = rand::rngs::OsRng;
+        #[cfg(not(feature = "wasm"))]
+        let mut rng = rand::thread_rng();
+        let mut ret = [0u8; 32];
+        rng.fill_bytes(&mut ret);
         RistrettoScalar {
             purpose: "random",
-            fe: SK::random(&mut thread_rng()),
+            fe: SK::from_bytes_mod_order(ret),
         }
     }
 

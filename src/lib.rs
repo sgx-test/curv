@@ -4,7 +4,7 @@
     (https://github.com/KZen-networks/curv)
     License MIT: <https://github.com/KZen-networks/curv/blob/master/LICENSE>
 */
-
+#![allow(dead_code)]
 #![allow(clippy::upper_case_acronyms)]
 
 pub mod elliptic;

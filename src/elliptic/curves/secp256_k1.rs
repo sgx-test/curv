@@ -1,5 +1,4 @@
 #![allow(non_snake_case)]
-#![no_std]
 use std::prelude::v1::*;
 /*
     This file is part of Curv library
@@ -29,7 +28,6 @@ use crypto::digest::Digest;
 use crypto::sha3::Sha3;
 #[cfg(feature = "merkle")]
 use merkle::Hashable;
-use rand::thread_rng;
 //use secp256k1::constants::{
 //    CURVE_ORDER, GENERATOR_X, GENERATOR_Y, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE,
 //};
@@ -109,9 +107,21 @@ impl ECScalar for Secp256k1Scalar {
     type SecretKey = SK;
 
     fn new_random() -> Secp256k1Scalar {
+        use rand::RngCore;
+        #[cfg(feature = "wasm")]
+        let mut rng = rand::rngs::OsRng;
+        #[cfg(not(feature = "wasm"))]
+        let mut rng = rand::thread_rng();
+        let key = loop {
+            let mut ret = [0u8; 32];
+            rng.fill_bytes(&mut ret);
+            if let Ok(key) = SecretKey::parse(&ret) {
+                break key;
+            }
+        };
         Secp256k1Scalar {
             purpose: "random",
-            fe: SecretKey::random(&mut thread_rng()),
+            fe: key,
         }
     }
 
