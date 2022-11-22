@@ -360,14 +360,7 @@ impl ECPoint for Ed25519Point {
                         let ge_bytes = ge_from_bytes.unwrap().to_bytes();
                         let ge_from_bytes = PK::from_bytes_negate_vartime(&ge_bytes[..]);
                         match ge_from_bytes {
-                            Some(y) => {
-                                let eight: FE = ECScalar::from(&BigInt::from(8));
-                                let new_point = Ed25519Point {
-                                    purpose: "random",
-                                    ge: y,
-                                };
-                                Ok(new_point * eight)
-                            }
+                            Some(y) => Ok(Ed25519Point { purpose: "random", ge: y }),
                             None => Err(InvalidPublicKey),
                         }
                     }
@@ -383,14 +376,7 @@ impl ECPoint for Ed25519Point {
                         let ge_bytes = ge_from_bytes.unwrap().to_bytes();
                         let ge_from_bytes = PK::from_bytes_negate_vartime(&ge_bytes[..]);
                         match ge_from_bytes {
-                            Some(y) => {
-                                let eight: FE = ECScalar::from(&BigInt::from(8));
-                                let new_point = Ed25519Point {
-                                    purpose: "random",
-                                    ge: y,
-                                };
-                                Ok(new_point * eight)
-                            }
+                            Some(y) => Ok(Ed25519Point { purpose: "random", ge: y }),
                             None => Err(InvalidPublicKey),
                         }
                     }
