@@ -96,10 +96,10 @@ impl ECScalar for Ed25519Scalar {
         template.extend_from_slice(&v);
         v = template;
         v.reverse();
-        // sc_reduce(&mut v[..]);
+        sc_reduce(&mut v[..]);
         Ed25519Scalar {
             purpose: "from_big_int",
-            fe: SK::from_bytes(&v[..32]),
+            fe: SK::from_bytes(&v[..]),
         }
     }
 
@@ -219,7 +219,7 @@ impl Serialize for Ed25519Scalar {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.to_big_int().to_hex())
+        serializer.serialize_str(&hex::encode(self.get_element().to_bytes()))
     }
 }
 
@@ -242,8 +242,10 @@ impl<'de> Visitor<'de> for Ed25519ScalarVisitor {
     }
 
     fn visit_str<E: de::Error>(self, s: &str) -> Result<Ed25519Scalar, E> {
-        let v = BigInt::from_hex(s).map_err(E::custom)?;
-        Ok(ECScalar::from(&v))
+        let bytes = hex::decode(s).map_err(E::custom)?;
+        let mut scalar = Ed25519Scalar::zero();
+        scalar.set_element(SK::from_bytes(&bytes));
+        Ok(scalar)
     }
 }
 
