@@ -96,10 +96,10 @@ impl ECScalar for Ed25519Scalar {
         template.extend_from_slice(&v);
         v = template;
         v.reverse();
-        sc_reduce(&mut v[..]);
+        // sc_reduce(&mut v[..]);
         Ed25519Scalar {
             purpose: "from_big_int",
-            fe: SK::from_bytes(&v[..]),
+            fe: SK::from_bytes(&v[..32]),
         }
     }
 
