@@ -176,7 +176,7 @@ dependencies = [
 [[package]]
 name = "cryptoxide"
 version = "0.3.3"
-source = "git+https://github.com/sgx-test/cryptoxide-sgx?branch=0.3.3-sgx#c560388759193125e2e5b7c7698312ba4b5c2d19"
+source = "git+https://github.com/sgx-test/cryptoxide-sgx?branch=0.3.3-sgx#ea800ce1e431c2b805d09f363bfdb6f587105fb8"
 
 [[package]]
 name = "curv"
