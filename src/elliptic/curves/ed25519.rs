@@ -38,12 +38,12 @@ use std::ptr;
 use std::sync::atomic;
 use zeroize::Zeroize;
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Ed25519Scalar {
     purpose: &'static str,
     fe: SK,
 }
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Ed25519Point {
     purpose: &'static str,
     ge: PK,
