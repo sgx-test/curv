@@ -8,7 +8,7 @@ use crate::arithmetic::traits::*;
 use crate::BigInt;
 use crate::ErrorKey;
 use zeroize::Zeroize;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul};
 use std::ptr;
 use std::sync::atomic;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -63,16 +63,13 @@ impl ECScalar for StarknetCurveScalar {
         let mut rng = rand::rngs::OsRng;
         #[cfg(not(feature = "wasm"))]
         let mut rng = rand::thread_rng();
-        let key = loop {
-            let mut ret = [0u8; 32];
-            rng.fill_bytes(&mut ret);
-            if let Ok(key) = FieldElement::from_bytes_be(&ret) {
-                break key;
-            }
-        };
+        let mut ret = [0u8; 32];
+        rng.fill_bytes(&mut ret);
+        let num = BigInt::from_bytes(&ret);
+        let c_num = BigInt::modulus(&num, &Self::q());
         StarknetCurveScalar {
             purpose: "random",
-            fe: key,
+            fe: FieldElement::from_byte_slice_be(&c_num.to_bytes()).unwrap(),
         }
     }
 
@@ -109,35 +106,55 @@ impl ECScalar for StarknetCurveScalar {
     }
 
     fn q() -> BigInt {
-        BigInt::from_bytes(&EC_ORDER.to_bytes_be())
+        BigInt::from_bytes(&EC_ORDER_RAW)
     }
 
     fn add(&self, other: &Self::SecretKey) -> StarknetCurveScalar {
+        let mut other_scalar: FE = ECScalar::new_random();
+        other_scalar.set_element(other.clone());
+        let res: FE = ECScalar::from(&BigInt::mod_add(
+            &self.to_big_int(),
+            &other_scalar.to_big_int(),
+            &FE::q(),
+        ));
         StarknetCurveScalar {
             purpose: "add",
-            fe: self.fe.add(*other),
+            fe: res.get_element(),
         }
     }
 
     fn mul(&self, other: &Self::SecretKey) -> StarknetCurveScalar {
+        let mut other_scalar: FE = ECScalar::new_random();
+        other_scalar.set_element(other.clone());
+        let res: FE = ECScalar::from(&BigInt::mod_mul(
+            &self.to_big_int(),
+            &other_scalar.to_big_int(),
+            &FE::q(),
+        ));
         StarknetCurveScalar {
             purpose: "mul",
-            fe: self.fe.mul(*other),
+            fe: res.get_element(),
         }
     }
 
     fn sub(&self, other: &Self::SecretKey) -> StarknetCurveScalar {
+        let mut other_scalar: FE = ECScalar::new_random();
+        other_scalar.set_element(other.clone());
+        let res: FE = ECScalar::from(&BigInt::mod_sub(
+            &self.to_big_int(),
+            &other_scalar.to_big_int(),
+            &FE::q(),
+        ));
         StarknetCurveScalar {
             purpose: "sub",
-            fe: self.fe.sub(*other),
+            fe: res.get_element(),
         }
     }
 
     fn invert(&self) -> StarknetCurveScalar {
-        StarknetCurveScalar {
-            purpose: "invert",
-            fe: self.fe.invert().unwrap(),
-        }
+        let bignum = self.to_big_int();
+        let bn_inv = BigInt::mod_inv(&bignum, &FE::q()).unwrap();
+        ECScalar::from(&bn_inv)
     }
 }
 
@@ -258,7 +275,7 @@ impl ECPoint for StarknetCurvePoint {
     }
 
     /// to return from BigInt to PK use from_bytes:
-    /// 1) convert BigInt::to_vec
+    /// 1) convert BigInt::to_bytes
     /// 2) call FieldElement::from_byte_slice_be
     fn bytes_compressed_to_big_int(&self) -> BigInt {
         match self.ge {
@@ -282,21 +299,34 @@ impl ECPoint for StarknetCurvePoint {
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<StarknetCurvePoint, ErrorKey> {
-        if bytes.len() != 32usize {
+        if bytes.len() != 64usize {
             return Err(ErrorKey::InvalidPublicKey);
         }
-        let x = FieldElement::from_byte_slice_be(&bytes).map_err(|_| ErrorKey::InvalidPublicKey)?;
-        let ge = AffinePoint::from_x(x).ok_or_else(|| ErrorKey::InvalidPublicKey)?;
+        let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+        let y = FieldElement::from_byte_slice_be(&bytes[32..]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+        if y.eq(&FieldElement::from_bytes_be(&[0u8;32]).unwrap()) {
+            return Ok(StarknetCurvePoint {
+                purpose: "from_bytes",
+                ge: None,
+            })
+        }
         Ok(StarknetCurvePoint {
             purpose: "from_bytes",
-            ge: Some(ge),
+            ge: Some(AffinePoint {
+                x, y, infinity: false,
+            }),
         })
     }
 
     fn pk_to_key_slice(&self) -> Vec<u8> {
         match self.ge {
-            None => [0u8; 32].to_vec(),
-            Some(_ge) => _ge.x.to_bytes_be().to_vec(),
+            None => [0u8; 64].to_vec(),
+            Some(_ge) => {
+                let mut res = vec![];
+                res.extend_from_slice(&_ge.x.to_bytes_be());
+                res.extend_from_slice(&_ge.y.to_bytes_be());
+                res
+            },
         }
     }
 
@@ -307,10 +337,9 @@ impl ECPoint for StarknetCurvePoint {
         let x = ProjectivePoint::from_affine_point(&self.ge.unwrap());
         let y = fe.to_bits_le();
         let z = &x * &y;
-        let p = AffinePoint::from(&z);
         StarknetCurvePoint {
             purpose: "scalar_mul",
-            ge: AffinePoint::from_x(p.x),
+            ge: Some(AffinePoint::from(&z)),
         }
     }
 
@@ -320,40 +349,75 @@ impl ECPoint for StarknetCurvePoint {
             ge: match (&self.ge, other) {
                 (None, right) => *right,
                 (left, None) => *left,
-                (Some(left), Some(right)) => Some(left.add(right)),
-            },
-        }
-    }
-
-    fn sub_point(&self, other: &Self::PublicKey) -> StarknetCurvePoint {
-        StarknetCurvePoint {
-            purpose: "sub_point",
-            ge: match (&self.ge, other) {
-                (None, Some(ge)) => Some(AffinePoint {
-                    x: ge.x,
-                    y: -ge.y,
-                    infinity: ge.infinity,
-                }),
-                (Some(ge), None) => Some(*ge),
-                (None, None) => None,
-                (Some(ge1), Some(ge2)) => {
-                    if ge1.x == ge2.x {
+                (Some(left), Some(right)) => {
+                    let res = left.add(right);
+                    if res.infinity {
                         None
                     } else {
-                        Some(ge1.sub(ge2))
+                        Some(res)
                     }
                 },
             },
         }
     }
 
+    fn sub_point(&self, other: &Self::PublicKey) -> StarknetCurvePoint {
+        let minus_point = match &other {
+            Some(ge) => {
+                let point = StarknetCurvePoint {
+                    purpose: "sub_point",
+                    ge: Some(*ge),
+                };
+                let order = [
+                    0x08u8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                ];
+                let order = BigInt::from_bytes(&order);
+                let x = point.x_coor().unwrap();
+                let y = point.y_coor().unwrap();
+                let minus_y = BigInt::mod_sub(&order, &y, &order);
+
+                let x_vec = BigInt::to_bytes(&x);
+                let y_vec = BigInt::to_bytes(&minus_y);
+
+                let mut template_x = vec![0; 32 - x_vec.len()];
+                template_x.extend_from_slice(&x_vec);
+                let mut x_vec = template_x;
+
+                let mut template_y = vec![0; 32 - y_vec.len()];
+                template_y.extend_from_slice(&y_vec);
+                let y_vec = template_y;
+
+                x_vec.extend_from_slice(&y_vec);
+
+                let minus_point: GE = ECPoint::from_bytes(&x_vec).unwrap();
+                minus_point
+            }
+            None => StarknetCurvePoint {
+                purpose: "sub_point",
+                ge: None,
+            },
+        };
+        let ge = ECPoint::add_point(self, &minus_point.get_element()).ge;
+        StarknetCurvePoint {
+            purpose: "sub_point",
+            ge,
+        }
+    }
+
     fn from_coor(x: &BigInt, y: &BigInt) -> StarknetCurvePoint {
+        let x = FieldElement::from_byte_slice_be(&x.to_bytes()).unwrap();
+        let y = FieldElement::from_byte_slice_be(&y.to_bytes()).unwrap();
+        if y.eq(&FieldElement::from_bytes_be(&[0u8;32]).unwrap()) {
+            return StarknetCurvePoint {
+                purpose: "from_bytes",
+                ge: None,
+            };
+        }
         StarknetCurvePoint {
             purpose: "from_coor",
             ge: Some(AffinePoint {
-                x: FieldElement::from_byte_slice_be(&BigInt::to_bytes(x)).unwrap(),
-                y: FieldElement::from_byte_slice_be(&BigInt::to_bytes(y)).unwrap(),
-                infinity: false,
+                x, y, infinity: false,
             }),
         }
     }
@@ -472,9 +536,9 @@ impl<'de> Visitor<'de> for StarknetCurvePointVisitor {
 }
 
 /// The order of the stark curve(not montgomery)
-pub const CURVE_ORDER: [u8; 32] = [
-    0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+pub const EC_ORDER_RAW: [u8; 32] = [
+    0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xB7, 0x81, 0x12, 0x6D, 0xCA, 0xE7, 0xB2, 0x32, 0x1E, 0x66, 0xA2, 0x41, 0xAD, 0xC6, 0x4D, 0x2F,
 ];
 
 /// The X coordinate of the generator(not montgomery)
@@ -497,7 +561,7 @@ pub const PUBLIC_KEY_SIZE: usize = 32;
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Neg;
+    use std::ops::{Add, Neg};
     use super::BigInt;
     use super::StarknetCurvePoint;
     use super::StarknetCurveScalar;
@@ -507,6 +571,14 @@ mod tests {
     use crate::cryptographic_primitives::hashing::traits::Hash;
     use crate::elliptic::curves::traits::ECPoint;
     use crate::elliptic::curves::traits::ECScalar;
+
+    #[test]
+    fn test_bigint_transfer() {
+        let num = BigInt::from(1234u64);
+        let scalar: StarknetCurveScalar = ECScalar::from(&num);
+        let to_num = scalar.to_big_int();
+        assert_eq!(num, to_num);
+    }
 
     #[test]
     fn stark_is_zero_scalar() {
@@ -537,7 +609,7 @@ mod tests {
         println!("zero point serialized: {:?}", point3.pk_to_key_slice());
         let point4 = GE::from_coor(&BigInt::zero(), &BigInt::zero());
         println!("point from zero bigint: {:?}", point4);
-        let point5 = GE::from_bytes(&[4; 32]).unwrap();
+        let point5 = GE::from_bytes(&[4; 64]).unwrap();
         println!("zero point from &[u8]: {:?}", point5);
         println!(
             "zero point mul scalar: {:?}",
@@ -660,6 +732,49 @@ mod tests {
     }
 
     #[test]
+    fn stark_test_minus_point() {
+        let a: FE = ECScalar::new_random();
+        let b: FE = ECScalar::new_random();
+        let b_bn = b.to_big_int();
+        let order = FE::q();
+        let minus_b = BigInt::mod_sub(&order, &b_bn, &order);
+        let a_minus_b = BigInt::mod_add(&a.to_big_int(), &minus_b, &order);
+        let a_minus_b_fe: FE = ECScalar::from(&a_minus_b);
+        let base: GE = ECPoint::generator();
+        let point_ab1 = base * a_minus_b_fe;
+
+        let point_a = base * a;
+        let point_b = base * b;
+        let point_ab2 = point_a.sub_point(&point_b.get_element());
+
+        assert_eq!(point_ab1.get_element(), point_ab2.get_element());
+    }
+
+    #[test]
+    fn stark_test_add_point() {
+        let a: FE = ECScalar::new_random();
+        let b: FE = ECScalar::new_random();
+        let base: GE = ECPoint::generator();
+        let point_ab1 = base.scalar_mul(&a.add(&b).fe);
+
+        let point_a = base.scalar_mul( &a.fe);
+        let point_b = base.scalar_mul( &b.fe);
+        let point_ab2 = point_a.add(&point_b);
+
+        assert_eq!(point_ab1, point_ab2);
+    }
+
+    #[test]
+    fn stark_test_invert() {
+        let a: FE = ECScalar::new_random();
+        let a_bn = a.to_big_int();
+        let a_inv = a.invert();
+        let a_inv_bn_1 = BigInt::mod_inv(&a_bn, &FE::q()).unwrap();
+        let a_inv_bn_2 = a_inv.to_big_int();
+        assert_eq!(a_inv_bn_1, a_inv_bn_2);
+    }
+
+    #[test]
     fn stark_test_scalar_mul_scalar() {
         let a: FE = ECScalar::new_random();
         let b: FE = ECScalar::new_random();
@@ -674,7 +789,7 @@ mod tests {
             let r = FE::new_random();
             let rg = GE::generator() * r;
             let key_slice = rg.pk_to_key_slice();
-            assert!(key_slice.len() == 32);
+            assert!(key_slice.len() == 64);
 
             let rg_prime: GE = ECPoint::from_bytes(&key_slice).unwrap();
             assert_eq!(rg_prime.get_element(), rg.get_element());
