@@ -300,9 +300,6 @@ impl ECPoint for StarknetCurvePoint {
 
     fn from_bytes(bytes: &[u8]) -> Result<StarknetCurvePoint, ErrorKey> {
         let bytes_len = bytes.len();
-        if bytes_len < 32 {
-            return Err(ErrorKey::InvalidPublicKey);
-        }
         let point = match bytes_len {
             33..=64 => {
                 let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
