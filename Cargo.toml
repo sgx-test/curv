@@ -34,7 +34,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_derive = "1.0"
 sha2 = "0.8.0"
 sha3 = "0.8.2"
-zeroize = {version = "=1.3.0"}
+zeroize = {version = "1.6.0"}
 # for starknet-curve
 starknet-crypto-codegen = "0.3.1"
 starknet-ff = { version = "0.3.2", default-features = false }
