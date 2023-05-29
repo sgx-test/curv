@@ -299,23 +299,55 @@ impl ECPoint for StarknetCurvePoint {
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<StarknetCurvePoint, ErrorKey> {
-        if bytes.len() != 64usize {
+        let bytes_len = bytes.len();
+        if bytes_len < 32 {
             return Err(ErrorKey::InvalidPublicKey);
         }
-        let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
-        let y = FieldElement::from_byte_slice_be(&bytes[32..]).map_err(|_| ErrorKey::InvalidPublicKey)?;
-        if y.eq(&FieldElement::from_bytes_be(&[0u8;32]).unwrap()) {
-            return Ok(StarknetCurvePoint {
-                purpose: "from_bytes",
-                ge: None,
-            })
-        }
-        Ok(StarknetCurvePoint {
-            purpose: "from_bytes",
-            ge: Some(AffinePoint {
-                x, y, infinity: false,
-            }),
-        })
+        let point = match bytes_len {
+            33..=64 => {
+                let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                let mut y_bytes = vec![0u8; 64 - bytes_len];
+                y_bytes.extend_from_slice(&bytes[32..]);
+                let y = FieldElement::from_byte_slice_be(&y_bytes).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                if y.eq(&FieldElement::from_bytes_be(&[0u8;32]).unwrap()) {
+                    return Ok(StarknetCurvePoint {
+                        purpose: "from_bytes",
+                        ge: None,
+                    })
+                }
+                StarknetCurvePoint {
+                    purpose: "from_bytes",
+                    ge: Some(AffinePoint {
+                        x, y, infinity: false,
+                    }),
+                }
+            },
+            0..=32 => {
+                let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                let point = AffinePoint::from_x(x);
+                StarknetCurvePoint {
+                    purpose: "from_bytes",
+                    ge: point,
+                }
+            },
+            _ => {
+                let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                let y = FieldElement::from_byte_slice_be(&bytes[32..64]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                if y.eq(&FieldElement::from_bytes_be(&[0u8;32]).unwrap()) {
+                    return Ok(StarknetCurvePoint {
+                        purpose: "from_bytes",
+                        ge: None,
+                    })
+                }
+                StarknetCurvePoint {
+                    purpose: "from_bytes",
+                    ge: Some(AffinePoint {
+                        x, y, infinity: false,
+                    }),
+                }
+            }
+        };
+        Ok(point)
     }
 
     fn pk_to_key_slice(&self) -> Vec<u8> {
