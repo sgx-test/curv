@@ -95,6 +95,7 @@ impl ECScalar for StarknetCurveScalar {
     }
 
     fn from(n: &BigInt) -> StarknetCurveScalar {
+        let n = n.modulus(&FE::q());
         StarknetCurveScalar {
             purpose: "from_big_int",
             fe: FieldElement::from_byte_slice_be(&n.to_bytes()).unwrap(),
@@ -301,7 +302,7 @@ impl ECPoint for StarknetCurvePoint {
     fn from_bytes(bytes: &[u8]) -> Result<StarknetCurvePoint, ErrorKey> {
         let bytes_len = bytes.len();
         let point = match bytes_len {
-            33..=64 => {
+            33..=63 => {
                 let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
                 let mut y_bytes = vec![0u8; 64 - bytes_len];
                 y_bytes.extend_from_slice(&bytes[32..]);
