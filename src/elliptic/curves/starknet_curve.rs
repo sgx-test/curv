@@ -320,7 +320,9 @@ impl ECPoint for StarknetCurvePoint {
                 }
             },
             0..=32 => {
-                let x = FieldElement::from_byte_slice_be(&bytes[..32]).map_err(|_| ErrorKey::InvalidPublicKey)?;
+                let mut x_bytes = vec![0u8; 32 - bytes_len];
+                x_bytes.extend_from_slice(&bytes);
+                let x = FieldElement::from_byte_slice_be(&x_bytes).map_err(|_| ErrorKey::InvalidPublicKey)?;
                 let point = AffinePoint::from_x(x);
                 StarknetCurvePoint {
                     purpose: "from_bytes",
