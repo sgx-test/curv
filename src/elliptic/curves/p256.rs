@@ -4,7 +4,6 @@ use super::traits::{ECPoint, ECScalar};
 use crate::arithmetic::traits::*;
 use crate::BigInt;
 use crate::ErrorKey;
-pub use p256::ecdsa::VerifyingKey;
 use p256::elliptic_curve::sec1::{FromEncodedPoint, ToEncodedPoint};
 use p256::{AffinePoint, EncodedPoint, ProjectivePoint, Scalar, FieldBytes};
 use rand::{thread_rng, Rng};
@@ -20,7 +19,7 @@ use p256::elliptic_curve::group::prime::PrimeCurveAffine;
 use zeroize::Zeroize;
 
 pub type SK = Scalar;
-pub type PK = VerifyingKey;
+pub type PK = AffinePoint;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Secp256r1Scalar {
@@ -251,17 +250,14 @@ impl ECPoint for Secp256r1Point {
     type Scalar = Secp256r1Scalar;
 
     fn zero() -> Secp256r1Point {
-        let new_point = AffinePoint::identity().to_encoded_point(false);
-        let verify_key = VerifyingKey::from_encoded_point(&new_point).unwrap();
         Secp256r1Point {
             purpose: "zero",
-            ge: verify_key,
+            ge: AffinePoint::identity(),
         }
     }
 
     fn is_zero(&self) -> bool {
-        // bool::from(self.ge.is_identity())
-        self == &Self::zero()
+        bool::from(self.ge.is_identity())
     }
 
     fn base_point2() -> Secp256r1Point {
@@ -274,8 +270,7 @@ impl ECPoint for Secp256r1Point {
     fn generator() -> Secp256r1Point {
         Secp256r1Point {
             purpose: "base_fe",
-            ge: VerifyingKey::from_encoded_point(&AffinePoint::generator().to_encoded_point(true))
-                .unwrap(),
+            ge: AffinePoint::generator(),
         }
     }
 
@@ -288,82 +283,50 @@ impl ECPoint for Secp256r1Point {
     }
 
     fn x_coor(&self) -> Option<BigInt> {
-        EncodedPoint::from(&self.ge).x().map(|x| BigInt::from_bytes(x.as_slice()))
+        let encoded = self.ge.to_encoded_point(false);
+        Some(BigInt::from_bytes(encoded.x()?.as_slice()))
     }
 
     fn y_coor(&self) -> Option<BigInt> {
-        // need this back and forth conversion to get an uncompressed point
-        let tmp = AffinePoint::from_encoded_point(&EncodedPoint::from(&self.ge)).unwrap();
-        Some(BigInt::from_bytes(
-            tmp.to_encoded_point(false).y().unwrap().as_slice(),
-        ))
+        let encoded = self.ge.to_encoded_point(false);
+        Some(BigInt::from_bytes(encoded.y()?.as_slice()))
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Secp256r1Point, ErrorKey> {
-        let result = PK::from_sec1_bytes(bytes);
-        let test = result.map(|pk| Secp256r1Point {
+        let encoded = EncodedPoint::from_bytes(bytes).map_err(|_| ErrorKey::InvalidPublicKey)?;
+        let affine_point = AffinePoint::from_encoded_point(&encoded);
+        if bool::from(affine_point.is_none()) {
+            return Err(ErrorKey::InvalidPublicKey);
+        }
+        Ok(Secp256r1Point {
             purpose: "random",
-            ge: pk,
-        });
-        test.map_err(|_err| ErrorKey::InvalidPublicKey)
+            ge: affine_point.unwrap(),
+        })
     }
 
     fn pk_to_key_slice(&self) -> Vec<u8> {
-        let tmp = AffinePoint::from_encoded_point(&EncodedPoint::from(&self.ge)).unwrap();
-        tmp.to_encoded_point(false).as_ref().to_vec()
+        self.ge.to_encoded_point(false).as_ref().to_vec()
     }
 
     fn scalar_mul(&self, fe: &SK) -> Secp256r1Point {
-        let point = ProjectivePoint::from(
-            AffinePoint::from_encoded_point(&EncodedPoint::from(&self.ge)).unwrap(),
-        );
-        let mut bytes = FieldBytes::default();
-        bytes.copy_from_slice(&fe.to_bytes());
-        let scalar = Scalar::from_repr(bytes).unwrap();
         Secp256r1Point {
             purpose: "mul",
-            ge: VerifyingKey::from_encoded_point(&(point * scalar).to_affine().to_encoded_point(true))
-                .unwrap(),
+            ge: (ProjectivePoint::from(&self.ge) * fe).to_affine(),
         }
     }
 
     fn add_point(&self, other: &PK) -> Secp256r1Point {
-        let point1 = ProjectivePoint::from(
-            AffinePoint::from_encoded_point(&EncodedPoint::from(&self.ge)).unwrap(),
-        );
-        let point2 = ProjectivePoint::from(
-            AffinePoint::from_encoded_point(&EncodedPoint::from(other)).unwrap(),
-        );
         Secp256r1Point {
             purpose: "mul",
-            ge: VerifyingKey::from_encoded_point(
-                &(point1 + point2).to_affine().to_encoded_point(true),
-            )
-            .unwrap(),
+            ge: (ProjectivePoint::from(&self.ge) + other).to_affine(),
         }
     }
 
     fn sub_point(&self, other: &PK) -> Secp256r1Point {
-        let point1 = ProjectivePoint::from(
-            AffinePoint::from_encoded_point(&EncodedPoint::from(&self.ge)).unwrap(),
-        );
-        let point2 = ProjectivePoint::from(
-            AffinePoint::from_encoded_point(&EncodedPoint::from(other)).unwrap(),
-        );
-        let result = &(point1 - point2).to_affine().to_encoded_point(true);
-        println!("x: {:?}\ny: {:?}", result.x(), result.y());
-        if result.is_identity() {
-            Secp256r1Point {
-                purpose: "sub",
-                ge: VerifyingKey::from_encoded_point(&EncodedPoint::identity()).unwrap(),
-            }
-        } else {
-            Secp256r1Point {
-                purpose: "sub",
-                ge: VerifyingKey::from_encoded_point(&result).unwrap(),
-            }
+        Secp256r1Point {
+            purpose: "sub",
+            ge: (ProjectivePoint::from(self.ge) - other).to_affine(),
         }
-
     }
 
     fn from_coor(x: &BigInt, y: &BigInt) -> Secp256r1Point {
@@ -387,7 +350,7 @@ impl ECPoint for Secp256r1Point {
 
         Secp256r1Point {
             purpose: "base_fe",
-            ge: VerifyingKey::from_encoded_point(&EncodedPoint::from_affine_coordinates(
+            ge: PK::from_encoded_point(&EncodedPoint::from_affine_coordinates(
                 FieldBytes::from_slice(&vec_x), FieldBytes::from_slice(&vec_y), false,
             ))
             .unwrap(),
