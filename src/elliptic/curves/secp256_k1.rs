@@ -389,7 +389,7 @@ impl ECPoint for Secp256k1Point {
 
         let byte_len = bytes_vec.len();
         match byte_len {
-            33..=63 => {
+            34..=64 => {
                 let mut template = vec![0; 64 - bytes_vec.len()];
                 template.extend_from_slice(&bytes);
                 let mut bytes_vec = template;
@@ -412,7 +412,24 @@ impl ECPoint for Secp256k1Point {
                     ge,
                 })
             }
-
+            33 => {
+                let mut template = vec![0; 33 - bytes_vec.len()];
+                template.extend_from_slice(&bytes);
+                bytes_array_33.copy_from_slice(&template);
+                let ge = if bytes_array_33[1..] == [0u8; 32] {
+                    None
+                } else {
+                    let result = PK::parse_slice(&bytes_array_33, None);
+                    if result.is_err() {
+                        return Err(ErrorKey::InvalidPublicKey);
+                    }
+                    Some(result.unwrap())
+                };
+                Ok(Secp256k1Point {
+                    purpose: "random",
+                    ge,
+                })
+            }
             0..=32 => {
                 let mut template = vec![0; 32 - bytes_vec.len()];
                 template.extend_from_slice(&bytes);
@@ -437,13 +454,7 @@ impl ECPoint for Secp256k1Point {
                 })
             }
             _ => {
-                let bytes_slice = &bytes_vec[0..64];
-                let mut bytes_vec = bytes_slice.to_vec();
-                let mut template: Vec<u8> = vec![4];
-                template.append(&mut bytes_vec);
-                let bytes_slice = &template[..];
-
-                bytes_array_65.copy_from_slice(&bytes_slice[0..65]);
+                bytes_array_65.copy_from_slice(&bytes_vec[0..65]);
 
                 let ge = if bytes_array_65[1..] == [0u8; 64] {
                     None
@@ -461,6 +472,7 @@ impl ECPoint for Secp256k1Point {
             }
         }
     }
+
     fn pk_to_key_slice(&self) -> Vec<u8> {
         match self.ge {
             None => [0u8; 65].to_vec(),
